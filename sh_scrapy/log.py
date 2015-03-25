@@ -19,6 +19,7 @@ def _logfn(*args, **kwargs):
     w = logs._writer
     if not (w and w.closed):
         logs.log(*args, **kwargs)
+        print >>_stderr, str(args), str(kwargs)
 
 
 def initialize_logging():
@@ -48,6 +49,7 @@ def initialize_logging():
         pass
 
     nh = logging.NullHandler()
+    nh = logging.StreamHandler()
     for ln in ('boto', 'requests', 'hubstorage'):
         lg = logging.getLogger(ln)
         lg.propagate = 0

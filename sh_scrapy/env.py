@@ -72,6 +72,8 @@ def decode_uri(uri=None, envvar=None):
     u'hello world'
     >>> decode_uri('data:;base64,ImhlbGxvIHdvcmxkIg==')
     u'hello world'
+    >>> decode_uri('{"spider": "hello"}')
+    {u'spider': u'hello'}
 
     """
     if envvar is not None:
@@ -101,6 +103,9 @@ def decode_uri(uri=None, envvar=None):
             return json.loads(data)
         else:
             return data
+
+    if uri.startswith('{'):
+        return json.loads(uri)
 
     if uri.startswith('/'):
         uri = 'file://' + uri

@@ -44,12 +44,16 @@ def _populate_settings_base(defaults_func, spider=None):
     s = get_project_settings()
     o = {}
 
-    apisettings = decode_uri(envvar='JOB_SETTINGS')
+    apisettings = decode_uri(envvar='JOB_SETTINGS') or {}
+    enabled_addons = apisettings.setdefault('enabled_addons', {})
+    project_settings = apisettings.setdefault('project_settings', {})
+    spider_settings = apisettings.setdefault('spider_settings', {})
+
     defaults_func(o)
-    _load_addons(apisettings['enabled_addons'], s, o)
-    _update_settings(o, apisettings['project_settings'])
+    _load_addons(enabled_addons, s, o)
+    _update_settings(o, project_settings)
     if spider:
-        _update_settings(o, apisettings['spider_settings'])
+        _update_settings(o, spider_settings)
         _maybe_load_autoscraping_project(s, o)
         o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
     s.setdict(o, priority='cmdline')

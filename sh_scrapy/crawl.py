@@ -2,7 +2,9 @@
 # --------------------- DO NOT ADD IMPORTS HERE -------------------------
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
-import os, sys, logging, json
+import os
+import sys
+import logging
 # XXX: Do not use atexit to close Hubstorage client!
 # why: functions registed with atexit are called when run_script() finishes,
 # and at that point main() function doesn't completed leading to lost log
@@ -22,7 +24,8 @@ def _fatalerror():
             from raven import Client
         except ImportError:
             # Do not fail here, previous error is more important
-            print >>_sys_stderr, 'HWORKER_SENTRY_DSN is set but python-raven is not installed'
+            print >>_sys_stderr, 'HWORKER_SENTRY_DSN is set but python-raven '\
+                                 'is not installed'
         else:
             Client(_sentry_dsn).captureException()
 
@@ -38,12 +41,42 @@ def _fatalerror():
         del ei
 
 
-def main():
+def _run(args, settings):
+    # SCRAPY_PROJECT_ID is set in both scrapy jobs and scrapy list (deploys)
+    if 'SCRAPY_PROJECT_ID' in os.environ:
+        _run_scrapy(args, settings)
+    else:
+        _run_pkgscript(args)
+
+
+def _run_scrapy(argv, settings):
+    from scrapy.cmdline import execute
+    sys.argv = argv
+    execute(settings=settings)
+
+
+def _run_pkgscript(argv):
+    import pkg_resources
+    scriptname = argv[0]
+    sys.argv = argv
+
+    def get_distribution():
+        for ep in pkg_resources.WorkingSet().iter_entry_points('scrapy'):
+            if ep.name == 'settings':
+                return ep.dist
+    d = get_distribution()
+    d.run_script(scriptname, {'__name__': '__main__'})
+
+
+def _launch():
     try:
         from sh_scrapy.env import get_args_and_env, decode_uri
         job = decode_uri(envvar='JOB_DATA')
+        assert job, 'JOB_DATA must be set'
         args, env = get_args_and_env(job)
         os.environ.update(env)
+
+        print args, env
 
         from sh_scrapy.log import initialize_logging
         from sh_scrapy.settings import populate_settings
@@ -67,36 +100,9 @@ def main():
         raise
 
 
-def _run(args, settings):
-    # SCRAPY_PROJECT_ID is set in both scrapy jobs and scrapy list (deploys)
-    if 'SCRAPY_PROJECT_ID' in os.environ:
-        _run_scrapy(args, settings)
-    else:
-        _run_pkgscript(args)
-
-
-def _run_scrapy(argv, settings):
-    from scrapy.cmdline import execute
-    sys.argv = argv
-    execute(settings=settings)
-
-
-def _run_pkgscript(argv):
-    import pkg_resources, sys
-    scriptname = argv[0]
-    sys.argv = argv
-
-    def get_distribution():
-        for ep in pkg_resources.WorkingSet().iter_entry_points('scrapy'):
-            if ep.name == 'settings':
-                return ep.dist
-    d = get_distribution()
-    d.run_script(scriptname, {'__name__': '__main__'})
-
-
-if __name__ == '__main__':
+def main():
     try:
-        main()
+        _launch()
     finally:
         sys.stderr = _sys_stderr
         sys.stdout = _sys_stdout
