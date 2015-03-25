@@ -1,3 +1,6 @@
+import os
+import json
+from base64 import b64decode
 from scrapy.utils.python import stringify_dict
 
 
@@ -60,3 +63,46 @@ def get_args_and_env(msg):
         'SHUB_JOB_TAGS': ','.join(msg.get('tags') or ()),  # DEPRECATED?
     })
     return args, env
+
+
+def decode_uri(uri=None, envvar=None):
+    """Return content for a data: or file: URI
+
+    >>> decode_uri('data:application/json;charset=utf8;base64,ImhlbGxvIHdvcmxkIg==')
+    u'hello world'
+    >>> decode_uri('data:;base64,ImhlbGxvIHdvcmxkIg==')
+    u'hello world'
+
+    """
+    if envvar is not None:
+        uri = os.getenv(envvar, '')
+    elif uri is None:
+        raise ValueError('An uri or envvar is required')
+
+    mime_type = 'application/json'
+
+    # data:[<MIME-type>][;charset=<encoding>][;base64],<data>
+    if uri.startswith('data:'):
+        prefix, _, data = uri.rpartition(',')
+        mods = {}
+        for idx, value in enumerate(prefix[5:].split(';')):
+            if idx == 0:
+                mime_type = value or mime_type
+            elif '=' in value:
+                k, _, v = value.partition('=')
+                mods[k] = v
+            else:
+                mods[value] = None
+
+        if 'base64' in mods:
+            data = b64decode(data)
+        if mime_type == 'application/json':
+            data = data.decode(mods.get('charset', 'utf-8'))
+            return json.loads(data)
+        else:
+            return data
+
+    if uri.startswith('/'):
+        uri = 'file://' + uri
+    if uri.startswith('file://'):
+        return json.load(open(uri[7:], 'rb'))

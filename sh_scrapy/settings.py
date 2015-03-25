@@ -1,6 +1,8 @@
-import sys, os, tempfile, json
+import sys, os, tempfile
 from scrapy.utils.project import get_project_settings
 from scrapy.settings.default_settings import EXTENSIONS_BASE, SPIDER_MIDDLEWARES_BASE
+
+from .env import decode_uri
 
 
 def _update_settings(o, d):
@@ -39,19 +41,19 @@ def _load_addons(addons, s, o):
 
 def _populate_settings_base(defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
-    settings = get_project_settings()
-    s, o = settings, settings.overrides
+    s = get_project_settings()
+    o = {}
 
-    apisettings = json.load(open(os.getenv('JOB_SETTINGS'), 'rb'))
-
+    apisettings = decode_uri(envvar='JOB_SETTINGS')
     defaults_func(o)
     _load_addons(apisettings['enabled_addons'], s, o)
     _update_settings(o, apisettings['project_settings'])
     if spider:
         _update_settings(o, apisettings['spider_settings'])
         _maybe_load_autoscraping_project(s, o)
-        settings.overrides['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
-    return settings
+        o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
+    s.setdict(o, priority='cmdline')
+    return s
 
 
 def _load_default_settings(o):

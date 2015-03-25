@@ -24,7 +24,6 @@ class HubstorageExtension(object):
     def from_crawler(cls, crawler):
         o = cls(crawler)
         crawler.signals.connect(o.item_scraped, signals.item_scraped)
-        crawler.signals.connect(o.spider_opened, signals.spider_opened)
         crawler.signals.connect(o.spider_closed, signals.spider_closed)
         return o
 
@@ -34,23 +33,12 @@ class HubstorageExtension(object):
         item.setdefault("_type", type_)
         self._write_item(item)
 
-    def spider_opened(self, spider):
-        self._write_event('job:started')
-
     def spider_closed(self, spider, reason):
         # flush item writer
         hsref.job.items.flush()
         # update outcome
         hsref.job.metadata.update(close_reason=reason)
         hsref.job.metadata.save()
-        # register job completion
-        self._write_event('job:completed', reason=reason)
-
-    def _write_event(self, _event, **ev):
-        hsref.project.activity.add(ev,
-                                   event=_event,
-                                   job=hsref.jobid,
-                                   spider=hsref.spiderid)
 
 
 class HubstorageMiddleware(object):

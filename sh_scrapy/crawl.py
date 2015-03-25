@@ -40,8 +40,8 @@ def _fatalerror():
 
 def main():
     try:
-        from sh_scrapy.env import get_args_and_env
-        job = json.load(open(os.getenv('JOB_DATA')))
+        from sh_scrapy.env import get_args_and_env, decode_uri
+        job = decode_uri(envvar='JOB_DATA')
         args, env = get_args_and_env(job)
         os.environ.update(env)
 
