@@ -2,6 +2,11 @@ import sys, os, tempfile
 from scrapy.utils.project import get_project_settings
 from scrapy.settings.default_settings import EXTENSIONS_BASE, SPIDER_MIDDLEWARES_BASE
 
+try:
+    from scrapy.utils.deprecate import update_classpath
+except ImportError:
+    update_classpath = lambda x: x
+
 from .env import decode_uri
 
 
@@ -34,7 +39,8 @@ def _load_addons(addons, s, o):
 
         skey = addon['type']
         components = s[skey]
-        components[addon['path']] = addon['order']
+        path = update_classpath(addon['path'])
+        components[path] = addon['order']
         o[skey] = components
         _update_settings(o, addon['default_settings'])
 
