@@ -6,6 +6,7 @@ import os
 import sys
 import logging
 import warnings
+from contextlib import contextmanager
 # XXX: Do not use atexit to close Hubstorage client!
 # why: functions registed with atexit are called when run_script() finishes,
 # and at that point main() function doesn't completed leading to lost log
@@ -17,6 +18,22 @@ _sys_stderr = sys.stderr  # stderr and stoud are redirected to HS later
 _sys_stdout = sys.stdout
 # Sentry DSN ins passed by environment variable
 _sentry_dsn = os.environ.pop('SENTRY_DSN', None)
+
+
+@contextmanager
+def ignore_warnings(**kwargs):
+    """Context manager that creates a temporary filter to ignore warnings.
+
+    This context manager behaves similarly to warnings.catch_warnings though
+    filtered warnings aren't recorded and you can ignore them by some criteria
+    matching warnings.simplefilter arguments.
+
+    As warnings.catch_warnings, this context manager is not thread-safe.
+    """
+    _filters = warnings.filters[:]
+    warnings.filterwarnings('ignore', **kwargs)
+    yield
+    warnings.filters = _filters
 
 
 def _fatalerror():
@@ -91,7 +108,8 @@ def _launch():
 
     # user code will be imported beyond this point --------------
     try:
-        settings = populate_settings(job['spider'])
+        with ignore_warnings(category=ScrapyDeprecationWarning):
+            settings = populate_settings(job['spider'])
         loghdlr.setLevel(settings['LOG_LEVEL'])
     except Exception:
         logging.exception('Settings initialization failed')
