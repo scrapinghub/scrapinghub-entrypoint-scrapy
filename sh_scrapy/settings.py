@@ -32,12 +32,18 @@ def _maybe_load_autoscraping_project(s, o):
         o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
 
 
+def _get_component_base(s, compkey):
+    if s.get(compkey + '_BASE') is not None:
+        return compkey + '_BASE'
+    return compkey
+
+
 def _load_addons(addons, s, o):
     for addon in addons:
         if addon['path'].startswith('hworker'):
             continue  # ignore missing module
 
-        skey = addon['type']
+        skey = _get_component_base(s, addon['type'])
         components = s[skey]
         path = update_classpath(addon['path'])
         components[path] = addon['order']
