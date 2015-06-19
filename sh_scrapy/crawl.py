@@ -5,6 +5,7 @@
 import os
 import sys
 import logging
+import warnings
 # XXX: Do not use atexit to close Hubstorage client!
 # why: functions registed with atexit are called when run_script() finishes,
 # and at that point main() function doesn't completed leading to lost log
@@ -70,6 +71,9 @@ def _run_pkgscript(argv):
 
 def _launch():
     try:
+        from scrapy.exceptions import ScrapyDeprecationWarning
+        warnings.filterwarnings('ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
+
         from sh_scrapy.env import get_args_and_env, decode_uri
         job = decode_uri(envvar='JOB_DATA')
         assert job, 'JOB_DATA must be set'
