@@ -17,7 +17,8 @@ from contextlib import contextmanager
 _sys_stderr = sys.stderr  # stderr and stoud are redirected to HS later
 _sys_stdout = sys.stdout
 # Sentry DSN ins passed by environment variable
-_sentry_dsn = os.environ.pop('SENTRY_DSN', None)
+_hworker_sentry_dsn = os.environ.pop('HWORKER_SENTRY_DSN', None)
+_sentry_dsn = os.environ.pop('SENTRY_DSN', _hworker_sentry_dsn)
 
 
 @contextmanager
