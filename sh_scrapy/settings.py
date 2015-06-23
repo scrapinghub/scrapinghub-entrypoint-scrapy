@@ -7,8 +7,6 @@ try:
 except ImportError:
     update_classpath = lambda x: x
 
-from .env import decode_uri
-
 
 def _update_settings(o, d):
     # We need to convert settings to string since the S3 download handler
@@ -54,12 +52,11 @@ def _load_addons(addons, s, o):
         _update_settings(o, addon['default_settings'])
 
 
-def _populate_settings_base(defaults_func, spider=None):
+def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     s = get_project_settings()
     o = {}
 
-    apisettings = decode_uri(envvar='JOB_SETTINGS') or {}
     enabled_addons = apisettings.setdefault('enabled_addons', {})
     project_settings = apisettings.setdefault('project_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})
@@ -105,5 +102,5 @@ def _load_default_settings(o):
     })
 
 
-def populate_settings(spider=None):
-    return _populate_settings_base(_load_default_settings, spider)
+def populate_settings(apisettings, spider=None):
+    return _populate_settings_base(apisettings, _load_default_settings, spider)

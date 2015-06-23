@@ -59,6 +59,11 @@ def _fatalerror():
         del ei
 
 
+def _get_apisettings():
+    from sh_scrapy.env import decode_uri
+    return decode_uri(envvar='JOB_SETTINGS') or {}
+
+
 def _run(args, settings):
     # SCRAPY_PROJECT_ID is set in both scrapy jobs and scrapy list (deploys)
     if 'SCRAPY_PROJECT_ID' in os.environ:
@@ -109,7 +114,7 @@ def _launch():
     # user code will be imported beyond this point --------------
     try:
         with ignore_warnings(category=ScrapyDeprecationWarning):
-            settings = populate_settings(job['spider'])
+            settings = populate_settings(_get_apisettings(), job['spider'])
         loghdlr.setLevel(settings['LOG_LEVEL'])
     except Exception:
         logging.exception('Settings initialization failed')
