@@ -41,7 +41,10 @@ def _get_component_base(s, compkey):
 def _load_addons(addons, s, o):
     for addon in addons:
         if addon['path'].startswith('hworker'):
-            continue  # ignore missing module
+            try:
+                import hworker
+            except ImportError:
+                continue  # ignore missing module
 
         skey = _get_component_base(s, addon['type'])
         components = s[skey]
