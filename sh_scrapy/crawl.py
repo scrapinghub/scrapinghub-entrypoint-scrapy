@@ -92,6 +92,25 @@ def _run_pkgscript(argv):
     d.run_script(scriptname, {'__name__': '__main__'})
 
 
+def _run_usercode(spider, args, apisettings_func, log_handler):
+    try:
+        from scrapy.exceptions import ScrapyDeprecationWarning
+        from sh_scrapy.settings import populate_settings
+
+        with ignore_warnings(category=ScrapyDeprecationWarning):
+            settings = populate_settings(apisettings_func(), spider)
+        log_handler.setLevel(settings['LOG_LEVEL'])
+    except Exception:
+        logging.exception('Settings initialization failed')
+        raise
+
+    try:
+        _run(args, settings)
+    except Exception:
+        logging.exception('Script initialization failed')
+        raise
+
+
 def _launch():
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
@@ -106,26 +125,13 @@ def _launch():
         print args, env
 
         from sh_scrapy.log import initialize_logging
-        from sh_scrapy.settings import populate_settings
+        from sh_scrapy.settings import populate_settings  # NOQA
         loghdlr = initialize_logging()
     except:
         _fatalerror()
         raise
 
-    # user code will be imported beyond this point --------------
-    try:
-        with ignore_warnings(category=ScrapyDeprecationWarning):
-            settings = populate_settings(_get_apisettings(), job['spider'])
-        loghdlr.setLevel(settings['LOG_LEVEL'])
-    except Exception:
-        logging.exception('Settings initialization failed')
-        raise
-
-    try:
-        _run(args, settings)
-    except Exception:
-        logging.exception('Script initialization failed')
-        raise
+    _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
 def main():
