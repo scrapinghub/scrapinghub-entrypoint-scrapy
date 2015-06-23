@@ -27,7 +27,7 @@ def _load_autoscraping_settings(s, o):
 
 
 def _maybe_load_autoscraping_project(s, o):
-    if os.environ.get('SHUB_SPIDER_TYPE') == 'auto':
+    if os.environ.get('SHUB_SPIDER_TYPE') in ('auto', 'portia'):
         _load_autoscraping_settings(s, o)
         o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
 
