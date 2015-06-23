@@ -78,9 +78,18 @@ def _load_default_settings(o):
     })
     EXTENSIONS_BASE.update({
         'scrapy.contrib.debug.StackTraceDump': 0,
-        #'slybot.closespider.SlybotCloseSpider': 0,
         'sh_scrapy.extension.HubstorageExtension': 100,
     })
+
+    try:
+        import slybot
+    except ImportError:
+        pass
+    else:
+        EXTENSIONS_BASE.update({
+            'slybot.closespider.SlybotCloseSpider': 0,
+        })
+
     o.update({
         'EXTENSIONS_BASE': EXTENSIONS_BASE,
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
