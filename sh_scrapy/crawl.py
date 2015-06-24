@@ -5,6 +5,8 @@
 import os
 import sys
 import logging
+import warnings
+from contextlib import contextmanager
 # XXX: Do not use atexit to close Hubstorage client!
 # why: functions registed with atexit are called when run_script() finishes,
 # and at that point main() function doesn't completed leading to lost log
@@ -15,7 +17,24 @@ import logging
 _sys_stderr = sys.stderr  # stderr and stoud are redirected to HS later
 _sys_stdout = sys.stdout
 # Sentry DSN ins passed by environment variable
-_sentry_dsn = os.environ.pop('SENTRY_DSN', None)
+_hworker_sentry_dsn = os.environ.pop('HWORKER_SENTRY_DSN', None)
+_sentry_dsn = os.environ.pop('SENTRY_DSN', _hworker_sentry_dsn)
+
+
+@contextmanager
+def ignore_warnings(**kwargs):
+    """Context manager that creates a temporary filter to ignore warnings.
+
+    This context manager behaves similarly to warnings.catch_warnings though
+    filtered warnings aren't recorded and you can ignore them by some criteria
+    matching warnings.simplefilter arguments.
+
+    As warnings.catch_warnings, this context manager is not thread-safe.
+    """
+    _filters = warnings.filters[:]
+    warnings.filterwarnings('ignore', **kwargs)
+    yield
+    warnings.filters = _filters
 
 
 def _fatalerror():
@@ -39,6 +58,11 @@ def _fatalerror():
         pass
     finally:
         del ei
+
+
+def _get_apisettings():
+    from sh_scrapy.env import decode_uri
+    return decode_uri(envvar='JOB_SETTINGS') or {}
 
 
 def _run(args, settings):
@@ -68,27 +92,14 @@ def _run_pkgscript(argv):
     d.run_script(scriptname, {'__name__': '__main__'})
 
 
-def _launch():
+def _run_usercode(spider, args, apisettings_func, log_handler):
     try:
-        from sh_scrapy.env import get_args_and_env, decode_uri
-        job = decode_uri(envvar='JOB_DATA')
-        assert job, 'JOB_DATA must be set'
-        args, env = get_args_and_env(job)
-        os.environ.update(env)
-
-        print args, env
-
-        from sh_scrapy.log import initialize_logging
+        from scrapy.exceptions import ScrapyDeprecationWarning
         from sh_scrapy.settings import populate_settings
-        loghdlr = initialize_logging()
-    except:
-        _fatalerror()
-        raise
 
-    # user code will be imported beyond this point --------------
-    try:
-        settings = populate_settings(job['spider'])
-        loghdlr.setLevel(settings['LOG_LEVEL'])
+        with ignore_warnings(category=ScrapyDeprecationWarning):
+            settings = populate_settings(apisettings_func(), spider)
+        log_handler.setLevel(settings['LOG_LEVEL'])
     except Exception:
         logging.exception('Settings initialization failed')
         raise
@@ -98,6 +109,29 @@ def _launch():
     except Exception:
         logging.exception('Script initialization failed')
         raise
+
+
+def _launch():
+    try:
+        from scrapy.exceptions import ScrapyDeprecationWarning
+        warnings.filterwarnings('ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
+
+        from sh_scrapy.env import get_args_and_env, decode_uri
+        job = decode_uri(envvar='JOB_DATA')
+        assert job, 'JOB_DATA must be set'
+        args, env = get_args_and_env(job)
+        os.environ.update(env)
+
+        print args, env
+
+        from sh_scrapy.log import initialize_logging
+        from sh_scrapy.settings import populate_settings  # NOQA
+        loghdlr = initialize_logging()
+    except:
+        _fatalerror()
+        raise
+
+    _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
 def main():

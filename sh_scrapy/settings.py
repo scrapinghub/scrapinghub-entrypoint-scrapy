@@ -2,7 +2,10 @@ import sys, os, tempfile
 from scrapy.utils.project import get_project_settings
 from scrapy.settings.default_settings import EXTENSIONS_BASE, SPIDER_MIDDLEWARES_BASE
 
-from .env import decode_uri
+try:
+    from scrapy.utils.deprecate import update_classpath
+except ImportError:
+    update_classpath = lambda x: x
 
 
 def _update_settings(o, d):
@@ -22,29 +25,38 @@ def _load_autoscraping_settings(s, o):
 
 
 def _maybe_load_autoscraping_project(s, o):
-    if os.environ.get('SHUB_SPIDER_TYPE') == 'auto':
+    if os.environ.get('SHUB_SPIDER_TYPE') in ('auto', 'portia'):
         _load_autoscraping_settings(s, o)
         o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
+
+
+def _get_component_base(s, compkey):
+    if s.get(compkey + '_BASE') is not None:
+        return compkey + '_BASE'
+    return compkey
 
 
 def _load_addons(addons, s, o):
     for addon in addons:
         if addon['path'].startswith('hworker'):
-            continue  # ignore missing module
+            try:
+                import hworker
+            except ImportError:
+                continue  # ignore missing module
 
-        skey = addon['type']
+        skey = _get_component_base(s, addon['type'])
         components = s[skey]
-        components[addon['path']] = addon['order']
+        path = update_classpath(addon['path'])
+        components[path] = addon['order']
         o[skey] = components
         _update_settings(o, addon['default_settings'])
 
 
-def _populate_settings_base(defaults_func, spider=None):
+def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     s = get_project_settings()
     o = {}
 
-    apisettings = decode_uri(envvar='JOB_SETTINGS') or {}
     enabled_addons = apisettings.setdefault('enabled_addons', {})
     project_settings = apisettings.setdefault('project_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})
@@ -66,9 +78,18 @@ def _load_default_settings(o):
     })
     EXTENSIONS_BASE.update({
         'scrapy.contrib.debug.StackTraceDump': 0,
-        #'slybot.closespider.SlybotCloseSpider': 0,
         'sh_scrapy.extension.HubstorageExtension': 100,
     })
+
+    try:
+        import slybot
+    except ImportError:
+        pass
+    else:
+        EXTENSIONS_BASE.update({
+            'slybot.closespider.SlybotCloseSpider': 0,
+        })
+
     o.update({
         'EXTENSIONS_BASE': EXTENSIONS_BASE,
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
@@ -77,8 +98,9 @@ def _load_default_settings(o):
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
         'LOG_FILE': 'scrapy.log',
+        'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
     })
 
 
-def populate_settings(spider=None):
-    return _populate_settings_base(_load_default_settings, spider)
+def populate_settings(apisettings, spider=None):
+    return _populate_settings_base(apisettings, _load_default_settings, spider)
