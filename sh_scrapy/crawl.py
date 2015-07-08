@@ -5,6 +5,7 @@
 import os
 import sys
 import logging
+import datetime
 import warnings
 from contextlib import contextmanager
 # XXX: Do not use atexit to close Hubstorage client!
@@ -57,11 +58,14 @@ def _fatalerror():
             try:
                 Client(_sentry_dsn).captureException()
             except Exception as err:
-                print >>_sys_stderr, datetime.datetime.utcnow().isoformat() \
+                print >>_sys_stderr, datetime.datetime.utcnow().isoformat(), \
                     "Error when sending fatal error to sentry:", err
 
+    # Log error to hworker slotN.out
+    # Inspired by logging.Handler.handleError()
     try:
-        traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
+        print >>_sys_stderr, datetime.datetime.utcnow().isoformat(),
+        traceback.print_exc(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
         pass
     finally:
