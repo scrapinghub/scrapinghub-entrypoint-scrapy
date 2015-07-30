@@ -60,6 +60,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     enabled_addons = apisettings.setdefault('enabled_addons', {})
     project_settings = apisettings.setdefault('project_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})
+    job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(o)
     _load_addons(enabled_addons, s, o)
@@ -68,6 +69,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
         _update_settings(o, spider_settings)
         _maybe_load_autoscraping_project(s, o)
         o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
+    _update_settings(o, job_settings)
     s.setdict(o, priority='cmdline')
     return s
 
