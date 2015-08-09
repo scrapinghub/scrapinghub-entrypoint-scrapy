@@ -5,6 +5,7 @@
 import os
 import sys
 import logging
+import datetime
 import warnings
 from contextlib import contextmanager
 # XXX: Do not use atexit to close Hubstorage client!
@@ -38,6 +39,14 @@ def ignore_warnings(**kwargs):
 
 
 def _fatalerror():
+    # Log error to hworker slotN.out
+    # Inspired by logging.Handler.handleError()
+    #
+    # Capture exc_info early on, so that an error in the handler doesn't
+    # overwrite it.
+    import traceback
+    ei = sys.exc_info()
+
     if _sentry_dsn:
         try:
             from raven import Client
@@ -46,14 +55,17 @@ def _fatalerror():
             print >>_sys_stderr, 'HWORKER_SENTRY_DSN is set but python-raven '\
                                  'is not installed'
         else:
-            Client(_sentry_dsn).captureException()
+            try:
+                Client(_sentry_dsn).captureException()
+            except Exception as err:
+                print >>_sys_stderr, datetime.datetime.utcnow().isoformat(), \
+                    "Error when sending fatal error to sentry:", err
 
     # Log error to hworker slotN.out
     # Inspired by logging.Handler.handleError()
-    import traceback
-    ei = sys.exc_info()
     try:
-        traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
+        print >>_sys_stderr, datetime.datetime.utcnow().isoformat(),
+        traceback.print_exc(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
         pass
     finally:
