@@ -79,7 +79,7 @@ def _load_default_settings(o):
         'sh_scrapy.extension.HubstorageMiddleware': 0,
     })
     EXTENSIONS_BASE.update({
-        'scrapy.contrib.debug.StackTraceDump': 0,
+        'scrapy.extensions.debug.StackTraceDump': 0,
         'sh_scrapy.extension.HubstorageExtension': 100,
     })
 
