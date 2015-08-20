@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='sh_scrapy',
+    name='scrapinghub-entrypoint-scrapy',
     version='0.4',
     packages=find_packages(),
     install_requires=[
