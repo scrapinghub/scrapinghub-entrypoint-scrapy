@@ -65,7 +65,7 @@ def _fatalerror():
     # Inspired by logging.Handler.handleError()
     try:
         print >>_sys_stderr, datetime.datetime.utcnow().isoformat(),
-        traceback.print_exc(ei[0], ei[1], ei[2], None, _sys_stderr)
+        traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
         pass
     finally:
