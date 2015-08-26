@@ -93,6 +93,8 @@ def _run_scrapy(argv, settings):
 
 def _run_pkgscript(argv):
     import pkg_resources
+    if argv[0].startswith('py:'):
+        argv[0] = argv[0][3:]
     scriptname = argv[0]
     sys.argv = argv
 
