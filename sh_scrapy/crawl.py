@@ -4,6 +4,7 @@
 # -----------------------------------------------------------------------
 import os
 import sys
+import socket
 import logging
 import datetime
 import warnings
@@ -20,6 +21,9 @@ _sys_stdout = sys.stdout
 # Sentry DSN ins passed by environment variable
 _hworker_sentry_dsn = os.environ.pop('HWORKER_SENTRY_DSN', None)
 _sentry_dsn = os.environ.pop('SENTRY_DSN', _hworker_sentry_dsn)
+
+# Set default socket timeout for code that doesn't
+socket.setdefaulttimeout(60.0)
 
 
 @contextmanager
