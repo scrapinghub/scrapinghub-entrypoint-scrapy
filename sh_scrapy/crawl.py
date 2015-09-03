@@ -110,14 +110,15 @@ def _run_pkgscript(argv):
     d.run_script(scriptname, {'__name__': '__main__'})
 
 
-def _run_usercode(spider, args, apisettings_func, log_handler):
+def _run_usercode(spider, args, apisettings_func, log_handler=None):
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
         from sh_scrapy.settings import populate_settings
 
         with ignore_warnings(category=ScrapyDeprecationWarning):
             settings = populate_settings(apisettings_func(), spider)
-        log_handler.setLevel(settings['LOG_LEVEL'])
+        if log_handler is not None:
+            log_handler.setLevel(settings['LOG_LEVEL'])
     except Exception:
         logging.exception('Settings initialization failed')
         raise
