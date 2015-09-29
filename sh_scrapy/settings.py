@@ -59,12 +59,14 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
 
     enabled_addons = apisettings.setdefault('enabled_addons', {})
     project_settings = apisettings.setdefault('project_settings', {})
+    organization_settings = apisettings.setdefault('organization_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})
     job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(o)
     _load_addons(enabled_addons, s, o)
     _update_settings(o, project_settings)
+    _update_settings(o, organization_settings)
     if spider:
         _update_settings(o, spider_settings)
         _maybe_load_autoscraping_project(s, o)
