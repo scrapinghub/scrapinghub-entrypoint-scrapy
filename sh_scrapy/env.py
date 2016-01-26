@@ -111,3 +111,10 @@ def decode_uri(uri=None, envvar=None):
         uri = 'file://' + uri
     if uri.startswith('file://'):
         return json.load(open(uri[7:], 'rb'))
+
+
+def setup_environment():
+    # scrapy.cfg is required by scrapy.utils.project.data_path
+    # FIXME: drop this requirement
+    if not os.path.exists('scrapy.cfg'):
+        open('scrapy.cfg', 'w').close()
