@@ -145,7 +145,9 @@ def _launch():
 
         from sh_scrapy.log import initialize_logging
         from sh_scrapy.settings import populate_settings  # NOQA
+        from sh_scrapy.env import setup_environment
         loghdlr = initialize_logging()
+        setup_environment()
     except:
         _fatalerror()
         raise
