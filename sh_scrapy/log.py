@@ -1,6 +1,6 @@
 import sys, os, logging, warnings
 from twisted.python import log as txlog
-from scrapy import log, __version__, optional_features
+from scrapy import log, __version__
 from scrapy.utils.python import unicode_to_str
 from sh_scrapy.hsref import hsref
 
@@ -66,7 +66,6 @@ def initialize_logging():
     # Scrapy specifics
     if 'SCRAPY_JOB' in os.environ:
         log.msg("Scrapy %s started" % __version__)
-        log.msg("Optional features available: %s" % ", ".join(optional_features), level=log.DEBUG)
         log.start = _dummy  # ugly but needed to prevent scrapy re-opening the log
 
     return hdlr
