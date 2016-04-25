@@ -2,6 +2,14 @@ import sys, os, tempfile
 from scrapy.utils.project import get_project_settings
 from scrapy.settings.default_settings import EXTENSIONS_BASE, SPIDER_MIDDLEWARES_BASE
 
+
+REPLACE_ADDONS_PATHS = {
+    "hworker.bot.ext.page.PageStorageMiddleware":
+        "scrapy_pagestorage.PageStorageMiddleware",
+    "hworker.bot.ext.persistence.DotScrapyPersistence":
+        "scrapy_dotpersistence.DotScrapyPersistence",
+}
+
 try:
     from scrapy.utils.deprecate import update_classpath
 except ImportError:
@@ -42,7 +50,10 @@ def _load_addons(addons, s, o):
             try:
                 import hworker
             except ImportError:
-                continue  # ignore missing module
+                if addon['path'] in REPLACE_ADDONS_PATHS:
+                    addon['path'] = REPLACE_ADDONS_PATHS[addon['path']]
+                else:
+                    continue  # ignore missing module
 
         skey = _get_component_base(s, addon['type'])
         components = s[skey]
