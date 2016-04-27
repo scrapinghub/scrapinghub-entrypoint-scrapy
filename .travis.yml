@@ -1,0 +1,26 @@
+language: python
+python: 2.7
+branches:
+  only:
+    - master
+    - /^\d\.\d+$/
+    - /^v\d\.\d+\.\d+(rc\d+|dev\d+)?$/
+env:
+  - TOXENV=py27
+install:
+  - pip install -U tox twine wheel codecov
+script: tox
+after_success:
+  - codecov
+cache:
+  directories:
+  - $HOME/.cache/pip
+deploy:
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: scrapyplugins
+  on:
+    tags: true
+    condition: "$TOXENV == py27 && $TRAVIS_TAG =~ ^v[0-9]+[.][0-9]+[.][0-9]+(rc[0-9]+|dev[0-9]+)?$"
+  password:
+    secure: spW448Oc+56tdfjDUQB9CZU0Zf+Aq+RL0AUjLn11dYQSXVmED/wek6wYWWki9nGGozrucWM1VMK9n1mvZdBk4NKTSWkWcCdAlhcaycFnqJU5LMXeqv8wQZPk9vHPB+/pI0siUPCvBbIdUetX9jQsyzvG5yxj00R5c28ZqtE4QjzsUfa5pOqaqlHF65VKoJrIQWNxWUFodbgu8bbWhiZzcRMQwjC5G5HRNVAhPC7LORndXPrUqczl3RwlPfuq0OoHORaiWdevo/we8qQvBlYXi4Gb5Vqqhrg83a5mef8OajF8vfxLPXLwbHnyxWvzaCTP2Lnc7HFCUD5XVbG6OLGZJnFat0vBQmU+PJ5Ovpu0iEieMlW2qxkV/6Jk6VPzxgZDK3L6vaN7yLnGPWPnG7mG9Yka8TNCoCRzzvLVp7wCBWXVNRlNe+OAd4wHvacuAna+ki1mmJQu0pu4kKu12t1dZwS8AmqY/auIGUM09HeAr9U5noTQdwCIASTjsafs8wnlSLLfNrUYrb6Fd8fmjIcA7cfGXq73mtwuokNVJS4NK+iWYV+p19L1Zmi8km08PRqKo3anWCBkEQGwzvrWD7WRIrHsAXB4w+qv2zNFaCo3Xm3puJvO8yvWTn944K8D5ZS6qooQEDKrWNb5QCPTa1Z2w0uAR+0rgTJk6WwCE7sIhCg=
