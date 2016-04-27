@@ -1,6 +1,5 @@
 import sys, os, tempfile
 from scrapy.utils.project import get_project_settings
-from scrapy.settings.default_settings import EXTENSIONS_BASE, SPIDER_MIDDLEWARES_BASE
 
 
 REPLACE_ADDONS_PATHS = {
@@ -74,7 +73,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     spider_settings = apisettings.setdefault('spider_settings', {})
     job_settings = apisettings.setdefault('job_settings', {})
 
-    defaults_func(o)
+    defaults_func(s)
     _load_addons(enabled_addons, s, o)
     _update_settings(o, project_settings)
     _update_settings(o, organization_settings)
@@ -87,26 +86,25 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     return s
 
 
-def _load_default_settings(o):
-    SPIDER_MIDDLEWARES_BASE.update({
+def _load_default_settings(s):
+    spider_middlewares = {
         'sh_scrapy.extension.HubstorageMiddleware': 0,
-    })
-    EXTENSIONS_BASE.update({
+    }
+    extensions = {
         'scrapy.extensions.debug.StackTraceDump': 0,
         'sh_scrapy.extension.HubstorageExtension': 100,
-    })
+    }
 
     try:
         import slybot
     except ImportError:
         pass
     else:
-        EXTENSIONS_BASE.update({
-            'slybot.closespider.SlybotCloseSpider': 0,
-        })
+        extensions['slybot.closespider.SlybotCloseSpider'] = 0
 
-    o.update({
-        'EXTENSIONS_BASE': EXTENSIONS_BASE,
+    s.get('EXTENSIONS_BASE').update(extensions)
+    s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
+    s.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
         'MEMUSAGE_LIMIT_MB': 512,
@@ -114,7 +112,7 @@ def _load_default_settings(o):
         'LOG_LEVEL': 'INFO',
         'LOG_FILE': 'scrapy.log',
         'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
-    })
+    }, priority='cmdline')
 
 
 def populate_settings(apisettings, spider=None):
