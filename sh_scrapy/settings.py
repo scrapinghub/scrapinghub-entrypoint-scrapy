@@ -102,10 +102,8 @@ def _load_default_settings(s):
     else:
         extensions['slybot.closespider.SlybotCloseSpider'] = 0
 
-    s.get('EXTENSIONS_BASE').update(extensions, priority='cmdline')
-    s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares,
-                                            priority='cmdline')
-
+    s.get('EXTENSIONS_BASE').update(extensions)
+    s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
     s.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
