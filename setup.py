@@ -2,11 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='scrapinghub-entrypoint-scrapy',
-    version='0.4',
+    version='0.4.0',
     packages=find_packages(),
     install_requires=[
-        'Scrapy>=0.24',
-        'hubstorage>=0.16',
+        'Scrapy>=1.0',
+        'hubstorage>=0.22',
     ],
     entry_points={
         'console_scripts': [
