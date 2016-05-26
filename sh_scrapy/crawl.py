@@ -133,8 +133,8 @@ def _run_usercode(spider, args, apisettings_func, log_handler=None):
 def _launch():
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
-        warnings.filterwarnings('ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
-
+        warnings.filterwarnings(
+            'ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
         from sh_scrapy.env import get_args_and_env, decode_uri
         job = decode_uri(envvar='JOB_DATA')
         assert job, 'JOB_DATA must be set'
@@ -153,6 +153,35 @@ def _launch():
         raise
 
     _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
+
+
+def _launch_list():
+    """ An entrypoint for list-spiders."""
+    try:
+        from scrapy.exceptions import ScrapyDeprecationWarning
+        warnings.filterwarnings(
+            'ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
+        from sh_scrapy.env import get_scrapy_list_args_and_env, decode_uri
+        job = decode_uri(envvar='JOB_DATA')
+        assert job, 'JOB_DATA must be set'
+        args, env = get_scrapy_list_args_and_env(job)
+        os.environ.update(env)
+
+        from sh_scrapy.env import setup_environment
+        setup_environment()
+    except:
+        _fatalerror()
+        raise
+
+    _run_usercode(None, args, _get_apisettings)
+
+
+def list():
+    try:
+        _launch_list()
+    finally:
+        sys.stderr = _sys_stderr
+        sys.stdout = _sys_stdout
 
 
 def main():
