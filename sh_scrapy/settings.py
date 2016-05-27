@@ -107,7 +107,7 @@ def _load_default_settings(s):
     s.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
-        'MEMUSAGE_LIMIT_MB': int(os.environ.get('JOB_MEMORY_LIMIT', 924)),
+        'MEMUSAGE_LIMIT_MB': int(os.environ.get('JOB_MEMORY_LIMIT', 950)),
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
         'LOG_FILE': 'scrapy.log',
