@@ -155,7 +155,7 @@ def _launch():
     _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
-def _launch_list():
+def list():
     """ An entrypoint for list-spiders."""
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
@@ -174,14 +174,6 @@ def _launch_list():
         raise
 
     _run_usercode(None, args, _get_apisettings)
-
-
-def list():
-    try:
-        _launch_list()
-    finally:
-        sys.stderr = _sys_stderr
-        sys.stdout = _sys_stdout
 
 
 def main():
