@@ -13,9 +13,9 @@ def _make_scrapy_args(arg, args_dict):
     return args
 
 
-def get_scrapy_list_args_and_env(msg):
+def get_scrapy_list_args_and_env(project_id):
     args = ['scrapy', 'list']
-    env = {'SCRAPY_PROJECT_ID': msg['project']}
+    env = {'SCRAPY_PROJECT_ID': project_id}
     return args, env
 
 

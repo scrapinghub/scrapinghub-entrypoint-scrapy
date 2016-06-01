@@ -155,16 +155,18 @@ def _launch():
     _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
-def list():
+def list_spiders():
     """ An entrypoint for list-spiders."""
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
         warnings.filterwarnings(
             'ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
         from sh_scrapy.env import get_scrapy_list_args_and_env, decode_uri
-        job = decode_uri(envvar='JOB_DATA')
-        assert job, 'JOB_DATA must be set'
-        args, env = get_scrapy_list_args_and_env(job)
+        job_settings = decode_uri(envvar='JOB_SETTINGS')
+        assert job_settings, 'JOB_SETTINGS must be set'
+        project_id = job_settings.get('project')
+        assert project_id, 'JOB_SETTINGS must contain project'
+        args, env = get_scrapy_list_args_and_env(project_id)
         os.environ.update(env)
 
         from sh_scrapy.env import setup_environment
