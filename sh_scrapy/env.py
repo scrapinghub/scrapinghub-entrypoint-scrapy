@@ -13,12 +13,6 @@ def _make_scrapy_args(arg, args_dict):
     return args
 
 
-def get_scrapy_list_args_and_env(project_id):
-    args = ['scrapy', 'list']
-    env = {'SCRAPY_PROJECT_ID': project_id}
-    return args, env
-
-
 def _scrapy_crawl_args_and_env(msg):
     args = ['scrapy', 'crawl', str(msg['spider'])] + \
         _make_scrapy_args('-a', msg.get('spider_args')) + \
