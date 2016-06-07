@@ -14,6 +14,7 @@ setup(
     entry_points={
         'console_scripts': [
             'start-crawl = sh_scrapy.crawl:main',
+            'list-spiders = sh_scrapy.crawl:list_spiders',
         ],
     },
 )
