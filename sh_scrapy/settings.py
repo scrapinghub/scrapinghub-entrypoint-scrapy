@@ -104,10 +104,11 @@ def _load_default_settings(s):
 
     s.get('EXTENSIONS_BASE').update(extensions)
     s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
+    memory_limit = int(os.environ.get('SHUB_JOB_MEMORY_LIMIT', 950))
     s.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
-        'MEMUSAGE_LIMIT_MB': int(os.environ.get('JOB_MEMORY_LIMIT', 950)),
+        'MEMUSAGE_LIMIT_MB': memory_limit,
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
         'LOG_FILE': 'scrapy.log',
