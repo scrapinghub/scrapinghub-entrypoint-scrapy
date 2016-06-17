@@ -78,7 +78,8 @@ def _fatalerror():
 
 def _get_apisettings():
     from sh_scrapy.env import decode_uri
-    return decode_uri(envvar='JOB_SETTINGS') or {}
+    return (decode_uri(envvar='SHUB_SETTINGS') or
+            decode_uri(envvar='JOB_SETTINGS') or {})
 
 
 def _run(args, settings):
@@ -136,8 +137,9 @@ def _launch():
         warnings.filterwarnings('ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
 
         from sh_scrapy.env import get_args_and_env, decode_uri
-        job = decode_uri(envvar='JOB_DATA')
-        assert job, 'JOB_DATA must be set'
+        job = (decode_uri(envvar='SHUB_JOB_DATA') or
+               decode_uri(envvar='JOB_DATA'))
+        assert job, 'SHUB_JOB_DATA (JOB_DATA) must be set'
         args, env = get_args_and_env(job)
         os.environ.update(env)
 
