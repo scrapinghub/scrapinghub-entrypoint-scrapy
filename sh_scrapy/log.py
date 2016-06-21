@@ -12,9 +12,11 @@ _stderr = sys.stderr
 
 
 if sys.version_info < (3,):
+    STRING_TYPE = basestring
     TEXT_TYPE = unicode
     BINARY_TYPE = str
 else:
+    STRING_TYPE = str
     TEXT_TYPE = str
     BINARY_TYPE = bytes
 
@@ -229,6 +231,8 @@ def to_native_str(text, encoding=None, errors='strict'):
     ``str`` representation means ``bytes`` in PY2 and ``unicode`` in PY3.
 
     """
+    if not isinstance(text, STRING_TYPE):
+        return text
     if sys.version_info[0] < 3:
         return to_bytes(text, encoding, errors)
     return to_unicode(text, encoding, errors)
