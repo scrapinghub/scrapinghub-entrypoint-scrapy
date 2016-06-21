@@ -1,6 +1,7 @@
 """
 Module to hold a reference to singleton Hubstorage client and Job instance
 """
+from __future__ import absolute_import
 import os
 
 
@@ -14,7 +15,7 @@ class _HubstorageRef(object):
         if self.enabled:
             self.jobkey = os.environ['SHUB_JOBKEY']
             self._projectid, self._spiderid, self._jobcounter = \
-                map(int, self.jobkey.split('/'))
+                list(map(int, self.jobkey.split('/')))
         else:
             self._projectid = None
             self._spiderid = None

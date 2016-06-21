@@ -2,6 +2,8 @@
 # --------------------- DO NOT ADD IMPORTS HERE -------------------------
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import sys
 import socket
@@ -56,19 +58,21 @@ def _fatalerror():
             from raven import Client
         except ImportError:
             # Do not fail here, previous error is more important
-            print >>_sys_stderr, 'HWORKER_SENTRY_DSN is set but python-raven '\
-                                 'is not installed'
+            print('HWORKER_SENTRY_DSN is set but python-raven '\
+                  'is not installed', file=_sys_stderr)
         else:
             try:
                 Client(_sentry_dsn).captureException()
             except Exception as err:
-                print >>_sys_stderr, datetime.datetime.utcnow().isoformat(), \
-                    "Error when sending fatal error to sentry:", err
+                print(datetime.datetime.utcnow().isoformat(),
+                      "Error when sending fatal error to sentry:", err,
+                      file=_sys_stderr)
 
     # Log error to hworker slotN.out
     # Inspired by logging.Handler.handleError()
     try:
-        print >>_sys_stderr, datetime.datetime.utcnow().isoformat(),
+        print(datetime.datetime.utcnow().isoformat(), end=' ',
+              file=_sys_stderr)
         traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
         pass
@@ -141,7 +145,7 @@ def _launch():
         args, env = get_args_and_env(job)
         os.environ.update(env)
 
-        print args, env
+        print(args, env)
 
         from sh_scrapy.log import initialize_logging
         from sh_scrapy.settings import populate_settings  # NOQA
