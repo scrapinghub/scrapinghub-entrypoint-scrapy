@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import sys, os, logging, warnings
 from twisted.python import log as txlog
 from scrapy import log, __version__
@@ -7,6 +9,14 @@ from sh_scrapy.hsref import hsref
 
 # keep a global reference to stderr as it is redirected on log initialization
 _stderr = sys.stderr
+
+
+if sys.version_info < (3,):
+    TEXT_TYPE = unicode
+    BINARY_TYPE = str
+else:
+    TEXT_TYPE = str
+    BINARY_TYPE = bytes
 
 
 def _logfn(*args, **kwargs):
@@ -163,8 +173,7 @@ class StdoutLogger(txlog.StdioOnnaStick):
         _logfn(message=self.prefix + msg, level=self.loglevel)
 
     def write(self, data):
-        if isinstance(data, unicode):
-            data = data.encode(self.encoding)
+        data = to_native_str(data, self.encoding)
 
         d = (self.buf + data).split('\n')
         self.buf = d[-1]
@@ -174,6 +183,52 @@ class StdoutLogger(txlog.StdioOnnaStick):
 
     def writelines(self, lines):
         for line in lines:
-            if isinstance(line, unicode):
-                line = line.encode(self.encoding)
+            line = to_native_str(line, self.encoding)
             self._logprefixed(line)
+
+
+def to_unicode(text, encoding=None, errors='strict'):
+    """Return the unicode representation of `text`.
+
+    If `text` is already a ``unicode`` object, return it as-is.
+    If `text` is a ``bytes`` object, decode it using `encoding`.
+
+    Otherwise, raise an error.
+
+    """
+    if isinstance(text, TEXT_TYPE):
+        return text
+    if not isinstance(text, BINARY_TYPE):
+        raise TypeError('to_unicode must receive a bytes, str or unicode '
+                        'object, got %s' % type(text).__name__)
+    if encoding is None:
+        encoding = 'utf-8'
+    return text.decode(encoding, errors)
+
+
+def to_bytes(text, encoding=None, errors='strict'):
+    """Return the binary representation of `text`.
+
+    If `text` is already a ``bytes`` object, return it as-is.
+    If `text` is a ``unicode`` object, encode it using `encoding`.
+
+    Otherwise, raise an error."""
+    if isinstance(text, BINARY_TYPE):
+        return text
+    if not isinstance(text, TEXT_TYPE):
+        raise TypeError('to_bytes must receive a unicode, str or bytes '
+                        'object, got %s' % type(text).__name__)
+    if encoding is None:
+        encoding = 'utf-8'
+    return text.encode(encoding, errors)
+
+
+def to_native_str(text, encoding=None, errors='strict'):
+    """Return ``str`` representation of `text`.
+
+    ``str`` representation means ``bytes`` in PY2 and ``unicode`` in PY3.
+
+    """
+    if sys.version_info[0] < 3:
+        return to_bytes(text, encoding, errors)
+    return to_unicode(text, encoding, errors)

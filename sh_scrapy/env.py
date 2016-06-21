@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 import json
 from base64 import b64decode

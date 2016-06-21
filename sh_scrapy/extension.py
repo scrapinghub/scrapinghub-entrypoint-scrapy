@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import time
 from weakref import WeakKeyDictionary
 from scrapy import signals, log
