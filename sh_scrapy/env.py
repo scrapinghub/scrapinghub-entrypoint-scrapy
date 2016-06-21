@@ -1,7 +1,9 @@
 import os
 import json
+import codecs
 from base64 import b64decode
 from scrapy.utils.python import stringify_dict
+from sh_scrapy.compat import to_bytes, to_native_str
 
 
 def _make_scrapy_args(arg, args_dict):
@@ -47,7 +49,8 @@ def _jobname(msg):
 
 
 def _jobauth(msg):
-    return '{0[key]}:{0[auth]}'.format(msg).encode('hex')
+    auth_data = to_bytes('{0[key]}:{0[auth]}'.format(msg))
+    return to_native_str(codecs.encode(auth_data, 'hex'))
 
 
 def get_args_and_env(msg):

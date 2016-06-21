@@ -2,7 +2,7 @@ import time
 from weakref import WeakKeyDictionary
 from scrapy import signals, log
 from scrapy.exceptions import NotConfigured
-from scrapy.contrib.exporter import PythonItemExporter
+from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.request import request_fingerprint
 from .hsref import hsref
@@ -17,7 +17,7 @@ class HubstorageExtension(object):
 
         self.crawler = crawler
         self._write_item = hsref.job.items.write
-        self.exporter = PythonItemExporter()
+        self.exporter = PythonItemExporter(binary=False)
         log.msg("HubStorage: writing items to %s" % hsref.job.items.url)
 
     @classmethod
