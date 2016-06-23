@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import time
 from weakref import WeakKeyDictionary
 from scrapy import signals, log
@@ -32,6 +33,7 @@ class HubstorageExtension(object):
         type_ = type(item).__name__
         item = self.exporter.export_item(item)
         item.setdefault("_type", type_)
+        print('Crawled', repr(item), repr(dict(item)))
         self._write_item(item)
 
     def spider_closed(self, spider, reason):
