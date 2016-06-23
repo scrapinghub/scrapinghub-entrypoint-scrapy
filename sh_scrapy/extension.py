@@ -18,7 +18,7 @@ class HubstorageExtension(object):
 
         self.crawler = crawler
         self._write_item = hsref.job.items.write
-        self.exporter = PythonItemExporter()
+        self.exporter = PythonItemExporter(binary=False)
         log.msg("HubStorage: writing items to %s" % hsref.job.items.url)
 
     @classmethod
