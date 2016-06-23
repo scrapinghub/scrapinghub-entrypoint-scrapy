@@ -2,7 +2,6 @@
 # --------------------- DO NOT ADD IMPORTS HERE -------------------------
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
-from __future__ import absolute_import
 from __future__ import print_function
 import os
 import sys

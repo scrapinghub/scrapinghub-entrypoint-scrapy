@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import sys, os, tempfile
 from sh_scrapy.compat import to_native_str, is_string
 from scrapy.utils.project import get_project_settings

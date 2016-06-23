@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import sys, os, logging, warnings
 from twisted.python import log as txlog
 from scrapy import log, __version__
