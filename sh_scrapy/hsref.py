@@ -3,6 +3,8 @@ Module to hold a reference to singleton Hubstorage client and Job instance
 """
 from __future__ import absolute_import
 import os
+from codecs import decode
+from sh_scrapy.compat import to_native_str
 
 
 class _HubstorageRef(object):
@@ -23,7 +25,7 @@ class _HubstorageRef(object):
 
     @property
     def auth(self):
-        return os.environ['SHUB_JOBAUTH'].decode('hex')
+        return to_native_str(decode(os.environ['SHUB_JOBAUTH'], 'hex'))
 
     @property
     def endpoint(self):
