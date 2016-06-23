@@ -29,6 +29,7 @@ class HubstorageExtension(object):
         return o
 
     def item_scraped(self, item, spider):
+        print('Before export', repr(item), repr(dict(item)))
         type_ = type(item).__name__
         item = self.exporter.export_item(item)
         item.setdefault("_type", type_)
