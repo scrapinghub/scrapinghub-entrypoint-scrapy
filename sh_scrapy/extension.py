@@ -3,7 +3,7 @@ import time
 from weakref import WeakKeyDictionary
 from scrapy import signals, log
 from scrapy.exceptions import NotConfigured
-from scrapy.contrib.exporter import PythonItemExporter
+from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.request import request_fingerprint
 from .hsref import hsref
