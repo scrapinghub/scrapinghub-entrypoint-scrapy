@@ -50,7 +50,8 @@ def _jobname(msg):
 
 
 def _jobauth(msg):
-    return codecs.encode(to_bytes('{0[key]}:{0[auth]}'.format(msg)), 'hex')
+    auth_data = to_bytes('{0[key]}:{0[auth]}'.format(msg))
+    return to_native_str(codecs.encode(auth_data, 'hex'))
 
 
 def get_args_and_env(msg):
