@@ -4,7 +4,7 @@ import json
 import codecs
 from base64 import b64decode
 from scrapy.utils.python import stringify_dict
-from sh_scrapy.compat import to_bytes
+from sh_scrapy.compat import to_bytes, to_native_str
 
 
 def _make_scrapy_args(arg, args_dict):
