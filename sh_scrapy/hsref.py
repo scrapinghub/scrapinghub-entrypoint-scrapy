@@ -15,8 +15,8 @@ class _HubstorageRef(object):
         self._job = None
         if self.enabled:
             self.jobkey = os.environ['SHUB_JOBKEY']
-            self._projectid, self._spiderid, self._jobcounter = \
-                list(map(int, self.jobkey.split('/')))
+            job_id = [int(id) for id in self.jobkey.split('/')]
+            self._projectid, self._spiderid, self._jobcounter = job_id
         else:
             self._projectid = None
             self._spiderid = None

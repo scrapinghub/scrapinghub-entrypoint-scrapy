@@ -81,7 +81,7 @@ def _fatalerror():
 
 def _get_apisettings():
     from sh_scrapy.env import decode_uri
-    return decode_uri(envvar='SHUB_SETTINGS')
+    return decode_uri(envvar='SHUB_SETTINGS') or {}
 
 
 def _run(args, settings):

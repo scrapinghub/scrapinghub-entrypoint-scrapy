@@ -5,20 +5,21 @@ from scrapy.exceptions import NotConfigured
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.request import request_fingerprint
-from .hsref import hsref
+from sh_scrapy import hsref
 
 
 class HubstorageExtension(object):
     """Extension to write scraped items to HubStorage"""
 
     def __init__(self, crawler):
-        if not hsref.enabled:
+        self.hsref = hsref.hsref
+        if not self.hsref.enabled:
             raise NotConfigured
 
         self.crawler = crawler
-        self._write_item = hsref.job.items.write
+        self._write_item = self.hsref.job.items.write
         self.exporter = PythonItemExporter(binary=False)
-        log.msg("HubStorage: writing items to %s" % hsref.job.items.url)
+        log.msg("HubStorage: writing items to %s" % self.hsref.job.items.url)
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -35,20 +36,21 @@ class HubstorageExtension(object):
 
     def spider_closed(self, spider, reason):
         # flush item writer
-        hsref.job.items.flush()
+        self.hsref.job.items.flush()
         # update outcome
-        hsref.job.metadata.update(close_reason=reason)
-        hsref.job.metadata.save()
+        self.hsref.job.metadata.update(close_reason=reason)
+        self.hsref.job.metadata.save()
 
 
 class HubstorageMiddleware(object):
 
     def __init__(self):
         self._seen = WeakKeyDictionary()
+        self.hsref = hsref.hsref
 
     def process_spider_input(self, response, spider):
         parent = response.meta.get('_hsparent')
-        riq = hsref.job.requests.add(
+        riq = self.hsref.job.requests.add(
             parent=parent,
             url=response.url,
             status=response.status,

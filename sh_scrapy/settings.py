@@ -68,7 +68,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     s = get_project_settings()
     o = {}
 
-    enabled_addons = apisettings.setdefault('enabled_addons', {})
+    enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
     organization_settings = apisettings.setdefault('organization_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})

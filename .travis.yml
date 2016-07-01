@@ -1,17 +1,24 @@
 language: python
-python: 2.7
 branches:
   only:
   - master
   - /^\d\.\d+$/
   - /^v\d\.\d+\.\d+(rc\d+|dev\d+)?$/
-env:
-- TOXENV=py27
+matrix:
+  include:
+    - python: 2.7
+      env: TOXENV=py27
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
 install:
-- pip install -U tox twine wheel codecov
-script: 'true'
+  - pip install tox
+  - pip install -U tox coverage codecov pytest-xdist
+script:
+  - tox
 after_success:
-- codecov
+  - codecov
 cache:
   directories:
   - $HOME/.cache/pip

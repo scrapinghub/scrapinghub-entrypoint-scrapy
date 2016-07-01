@@ -2,16 +2,16 @@ import os
 import json
 import codecs
 from base64 import b64decode
-from scrapy.utils.python import stringify_dict
-from sh_scrapy.compat import to_bytes, to_native_str
+from sh_scrapy.compat import to_bytes, to_native_str, is_string
 
 
 def _make_scrapy_args(arg, args_dict):
     if not args_dict:
         return []
     args = []
-    for kv in stringify_dict(args_dict, keys_only=False).items():
-        args += [arg, "%s=%s" % kv]
+    for k, v in sorted(dict(args_dict).items()):
+        args += [arg, "{}={}".format(
+            to_native_str(k), to_native_str(v) if is_string else v)]
     return args
 
 
@@ -36,7 +36,8 @@ def _job_args_and_env(msg):
     cmd = msg.get('job_cmd')
     if not isinstance(cmd, list):
         cmd = [str(cmd)]
-    return cmd, stringify_dict(env, keys_only=False)
+    return cmd, {to_native_str(k): to_native_str(v) if is_string(v) else v
+                 for k, v in sorted(dict(env).items())}
 
 
 def _jobname(msg):
@@ -113,7 +114,9 @@ def decode_uri(uri=None, envvar=None):
     if uri.startswith('/'):
         uri = 'file://' + uri
     if uri.startswith('file://'):
-        return json.load(open(uri[7:], 'rb'))
+        reader = codecs.getreader("utf-8")
+        with open(uri[7:], 'rb') as data_file:
+            return json.load(reader(data_file))
 
 
 def setup_environment():

@@ -1,7 +1,7 @@
 import time
 from twisted.internet import task
 from scrapy.statscol import StatsCollector
-from .hsref import hsref
+from sh_scrapy import hsref
 
 
 class HubStorageStatsCollector(StatsCollector):
@@ -16,11 +16,15 @@ class HubStorageStatsCollector(StatsCollector):
     ]
     INTERVAL = 30
 
+    def __init__(self, crawler):
+        super(HubStorageStatsCollector, self).__init__(crawler)
+        self.hsref = hsref.hsref
+
     def _upload_stats(self):
         row = [int(time.time() * 1000)]
         row.extend(self._stats.get(x, 0) for x in self.STATS_TO_COLLECT)
-        hsref.job.samples.write(row)
-        hsref.job.metadata.apipost(jl={'scrapystats': self._stats})
+        self.hsref.job.samples.write(row)
+        self.hsref.job.metadata.apipost(jl={'scrapystats': self._stats})
 
     def open_spider(self, spider):
         self._setup_looping_call(now=True)
