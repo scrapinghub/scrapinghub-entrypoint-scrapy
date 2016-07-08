@@ -25,7 +25,7 @@ def get_folder_disk_usage(folders, timeout=300):
 
     :param timeout: Sets a timer which will kill find
                     process if it takes too long to execute.
-    :type folder: int
+    :type timeout: int
 
     :return: ``(inodes_count, space_bytes)`` tuple
     """
