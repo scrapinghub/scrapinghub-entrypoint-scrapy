@@ -93,6 +93,7 @@ def _load_default_settings(s):
     }
     extensions = {
         'scrapy.extensions.debug.StackTraceDump': 0,
+        'sh_scrapy.diskusage.DiskUsage': 0,
         'sh_scrapy.extension.HubstorageExtension': 100,
     }
 
@@ -108,6 +109,8 @@ def _load_default_settings(s):
     memory_limit = int(os.environ.get('SHUB_JOB_MEMORY_LIMIT', 950))
     s.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
+        'DISKUSAGE_ENABLED': True,
+        'DISKUSAGE_CHECK_INTERVAL_SECONDS': 60.0,
         'MEMUSAGE_ENABLED': True,
         'MEMUSAGE_LIMIT_MB': memory_limit,
         'WEBSERVICE_ENABLED': False,
