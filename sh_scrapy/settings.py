@@ -1,4 +1,5 @@
 import sys, os, tempfile
+from sh_scrapy.compat import to_native_str, is_string
 from scrapy.utils.project import get_project_settings
 
 
@@ -20,7 +21,7 @@ def _update_settings(o, d):
     # doesn't work if the AWS keys are passed as unicode. Other code may also
     # depend on settings being str. TODO: we should test this
     for k, v in d.items():
-        d[k.encode('utf-8')] = v.encode('utf-8') if isinstance(v, unicode) else v
+        d[to_native_str(k)] = to_native_str(v) if is_string(v) else v
     o.update(d)
 
 
@@ -67,7 +68,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     s = get_project_settings()
     o = {}
 
-    enabled_addons = apisettings.setdefault('enabled_addons', {})
+    enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
     organization_settings = apisettings.setdefault('organization_settings', {})
     spider_settings = apisettings.setdefault('spider_settings', {})

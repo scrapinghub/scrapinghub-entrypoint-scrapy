@@ -2,6 +2,8 @@
 Module to hold a reference to singleton Hubstorage client and Job instance
 """
 import os
+from codecs import decode
+from sh_scrapy.compat import to_native_str
 
 
 class _HubstorageRef(object):
@@ -13,8 +15,8 @@ class _HubstorageRef(object):
         self._job = None
         if self.enabled:
             self.jobkey = os.environ['SHUB_JOBKEY']
-            self._projectid, self._spiderid, self._jobcounter = \
-                map(int, self.jobkey.split('/'))
+            job_id = [int(id) for id in self.jobkey.split('/')]
+            self._projectid, self._spiderid, self._jobcounter = job_id
         else:
             self._projectid = None
             self._spiderid = None
@@ -22,7 +24,7 @@ class _HubstorageRef(object):
 
     @property
     def auth(self):
-        return os.environ['SHUB_JOBAUTH'].decode('hex')
+        return to_native_str(decode(os.environ['SHUB_JOBAUTH'], 'hex'))
 
     @property
     def endpoint(self):

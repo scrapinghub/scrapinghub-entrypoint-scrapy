@@ -2,7 +2,8 @@ import sys, os, logging, warnings
 from twisted.python import log as txlog
 from scrapy import log, __version__
 from scrapy.utils.python import unicode_to_str
-from sh_scrapy.hsref import hsref
+from sh_scrapy import hsref
+from sh_scrapy.compat import to_native_str
 
 
 # keep a global reference to stderr as it is redirected on log initialization
@@ -12,10 +13,10 @@ _stderr = sys.stderr
 def _logfn(*args, **kwargs):
     """Wraps HS job logging function
 
-    Prevents errors writign to a closed batchuploader writer
+    Prevents errors writing to a closed batchuploader writer
     It happens when the log writer is closed but batchuploader is still sending batches
     """
-    logs = hsref.job.logs
+    logs = hsref.hsref.job.logs
     w = logs._writer
     if not (w and w.closed):
         logs.log(*args, **kwargs)
@@ -127,7 +128,7 @@ class HubstorageLogObserver(object):
 
         msg = ev.get('message')
         if msg:
-            msg = unicode_to_str(msg[0])
+            msg = to_native_str(msg[0])
 
         failure = ev.get('failure', None)
         if failure:
@@ -144,8 +145,8 @@ class HubstorageLogObserver(object):
             except:
                 msg = "UNABLE TO FORMAT LOG MESSAGE: fmt=%r ev=%r" % (fmt, ev)
                 level = logging.ERROR
-
-        msg = msg.replace('\n', '\n\t')  # to replicate typical scrapy log appeareance
+        # to replicate typical scrapy log appeareance
+        msg = msg.replace('\n', '\n\t')
         return {'message': msg, 'level': level}
 
 
@@ -163,8 +164,7 @@ class StdoutLogger(txlog.StdioOnnaStick):
         _logfn(message=self.prefix + msg, level=self.loglevel)
 
     def write(self, data):
-        if isinstance(data, unicode):
-            data = data.encode(self.encoding)
+        data = to_native_str(data, self.encoding)
 
         d = (self.buf + data).split('\n')
         self.buf = d[-1]
@@ -174,6 +174,5 @@ class StdoutLogger(txlog.StdioOnnaStick):
 
     def writelines(self, lines):
         for line in lines:
-            if isinstance(line, unicode):
-                line = line.encode(self.encoding)
+            line = to_native_str(line, self.encoding)
             self._logprefixed(line)
