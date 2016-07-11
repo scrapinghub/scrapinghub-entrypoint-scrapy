@@ -85,13 +85,15 @@ class DiskUsage(object):
             msg = 'inodes limit ({} > {})'.format(inodes, self.inodes_limit)
         elif self.space_limit and space > self.space_limit:
             msg = 'space limit ({}M > {}M)'.format(space, self.space_limit)
-        if msg:
-            self.crawler.stats.set_value('diskusage/limit_reached', 1)
-            logger.error("Disk usage exceeded: %s. Shutting down Scrapy...",
-                         msg, extra={'crawler': self.crawler})
-            open_spiders = self.crawler.engine.open_spiders
-            if open_spiders:
-                for spider in open_spiders:
-                    self.crawler.engine.close_spider(spider, 'diskusage_exceeded')
-            else:
-                self.crawler.stop()
+        if not msg:
+            return
+
+        self.crawler.stats.set_value('diskusage/limit_reached', 1)
+        logger.error("Disk usage exceeded: %s. Shutting down Scrapy...",
+                        msg, extra={'crawler': self.crawler})
+        open_spiders = self.crawler.engine.open_spiders
+        if open_spiders:
+            for spider in open_spiders:
+                self.crawler.engine.close_spider(spider, 'diskusage_exceeded')
+        else:
+            self.crawler.stop()
