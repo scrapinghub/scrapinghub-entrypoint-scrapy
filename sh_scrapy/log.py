@@ -1,13 +1,18 @@
 import sys, os, logging, warnings
+from scrapy.utils import log
+from logging.handlers import RotatingFileHandler
 from twisted.python import log as txlog
-from scrapy import log, __version__
+from scrapy import __version__
 from scrapy.utils.python import unicode_to_str
 from sh_scrapy import hsref
 from sh_scrapy.compat import to_native_str
 
 
+ROTATING_LOG_MAX_BYTES = 1000000
+ROTATING_LOG_BACKUP_COUNT = 5
 # keep a global reference to stderr as it is redirected on log initialization
 _stderr = sys.stderr
+_get_handler = log._get_handler
 
 
 def _logfn(*args, **kwargs):
@@ -66,15 +71,29 @@ def initialize_logging():
 
     # Scrapy specifics
     if 'SCRAPY_JOB' in os.environ:
-        log.msg("Scrapy %s started" % __version__)
-        log.start = _dummy  # ugly but needed to prevent scrapy re-opening the log
+        log._get_handler = _patched_get_handler
 
     return hdlr
 
 
-def _dummy(*a, **kw):
-    """Scrapy log.start dummy monkeypatch"""
-    pass
+def _patched_get_handler(settings):
+    """Patched scrapy log._get_handler for rotating logs."""
+    filename = settings.get('LOG_FILE')
+    if filename:
+        encoding = settings.get('LOG_ENCODING')
+        handler = RotatingFileHandler(
+            filename, encoding=encoding,
+            maxBytes=ROTATING_LOG_MAX_BYTES,
+            backupCount=ROTATING_LOG_BACKUP_COUNT)
+        formatter = logging.Formatter(
+            fmt=settings.get('LOG_FORMAT'),
+            datefmt=settings.get('LOG_DATEFORMAT')
+        )
+        handler.setFormatter(formatter)
+        handler.setLevel(settings.get('LOG_LEVEL'))
+        handler.addFilter(log.TopLevelFormatter(['scrapy']))
+        return handler
+    return _get_handler(settings)
 
 
 class HubstorageLogHandler(logging.Handler):
