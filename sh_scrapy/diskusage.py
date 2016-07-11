@@ -17,15 +17,11 @@ from scrapy.utils.engine import get_engine_status
 logger = logging.getLogger(__name__)
 
 
-def get_folder_disk_usage(folders, timeout=300):
+def get_folder_disk_usage(folders):
     """ Get disk usage for current user.
 
     :param folders: Folders to calculate disk usage for.
     :type folders: a list of str
-
-    :param timeout: Sets a timer which will kill find
-                    process if it takes too long to execute.
-    :type timeout: int
 
     :return: ``(inodes_count, space_bytes)`` tuple
     """
@@ -35,9 +31,7 @@ def get_folder_disk_usage(folders, timeout=300):
         '-type', 'f', '-printf', '%s\n'], stdout=PIPE)
     awk_process = Popen(['awk', "{i++;s+=$1}END{print i\" \"s}"],
                         stdin=find_process.stdout, stdout=PIPE)
-    timer = Timer(timeout, find_process.kill)
     try:
-        timer.start()
         find_process.stdout.close()
         result = awk_process.communicate()[0]
         logger.debug('Find result: %s', result)
@@ -45,18 +39,12 @@ def get_folder_disk_usage(folders, timeout=300):
             inodes, space = [int(val) for val in result.strip().split(' ')]
     except Exception as exc:
         logger.warning("Find exception: %s", exc)
-    else:
-        if find_process.returncode == -9:
-            logger.warning("Find process killed after %s secs", timeout)
-    finally:
-        timer.cancel()
     return inodes, space
 
 
 class DiskUsage(object):
 
     FOLDERS = ['/scrapy', '/tmp']
-    FIND_TIMEOUT = 300
 
     def __init__(self, crawler):
         if not crawler.settings.getbool('DISKUSAGE_ENABLED'):
@@ -76,7 +64,7 @@ class DiskUsage(object):
         return cls(crawler)
 
     def engine_started(self):
-        inodes, space = get_folder_disk_usage(self.FOLDERS, self.FIND_TIMEOUT)
+        inodes, space = get_folder_disk_usage(self.FOLDERS)
         self.crawler.stats.set_value('diskusage/inodes/startup', inodes)
         self.crawler.stats.set_value('diskusage/space/startup', space)
         self.task = task.LoopingCall(self._task_handler)
@@ -87,7 +75,7 @@ class DiskUsage(object):
             self.task.stop()
 
     def _task_handler(self):
-        inodes, space = get_folder_disk_usage(self.FOLDERS, self.FIND_TIMEOUT)
+        inodes, space = get_folder_disk_usage(self.FOLDERS)
         self.crawler.stats.max_value('diskusage/inodes/max', inodes)
         self.crawler.stats.max_value('diskusage/space/max', space)
         msg = None
