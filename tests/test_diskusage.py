@@ -57,6 +57,12 @@ def du_extension():
     return DiskUsage(crawler)
 
 
+def test_diskusage_from_crawler():
+    settings = {'DISKUSAGE_ENABLED': True}
+    crawler = get_crawler(settings_dict=settings)
+    assert DiskUsage.from_crawler(crawler)
+
+
 def test_diskusage_init(du_extension):
     assert isinstance(du_extension.crawler, Crawler)
     assert du_extension.space_limit == 512 * 1024 * 1024

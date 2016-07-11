@@ -15,6 +15,7 @@ from scrapy.utils.engine import get_engine_status
 
 
 logger = logging.getLogger(__name__)
+DEFAULT_CHECK_INTERVAL = 300.0
 
 
 def get_disk_usage(folders):
@@ -54,7 +55,8 @@ class DiskUsage(object):
 
         self.space_limit = crawler.settings.getint('DISKUSAGE_SPACE_LIMIT_MB')*1024*1024
         self.inodes_limit = crawler.settings.getint('DISKUSAGE_INODES_LIMIT')
-        self.check_interval = crawler.settings.getfloat('DISKUSAGE_CHECK_INTERVAL_SECONDS')
+        self.check_interval = crawler.settings.getfloat(
+            'DISKUSAGE_CHECK_INTERVAL_SECONDS', DEFAULT_CHECK_INTERVAL)
 
         crawler.signals.connect(self.engine_started, signal=signals.engine_started)
         crawler.signals.connect(self.engine_stopped, signal=signals.engine_stopped)
