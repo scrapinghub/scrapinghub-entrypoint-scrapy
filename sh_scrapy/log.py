@@ -12,7 +12,6 @@ ROTATING_LOG_MAX_BYTES = 1000000
 ROTATING_LOG_BACKUP_COUNT = 5
 # keep a global reference to stderr as it is redirected on log initialization
 _stderr = sys.stderr
-_get_handler = log._get_handler
 
 
 def _logfn(*args, **kwargs):
@@ -89,11 +88,15 @@ def _patched_get_handler(settings):
             fmt=settings.get('LOG_FORMAT'),
             datefmt=settings.get('LOG_DATEFORMAT')
         )
-        handler.setFormatter(formatter)
-        handler.setLevel(settings.get('LOG_LEVEL'))
-        handler.addFilter(log.TopLevelFormatter(['scrapy']))
-        return handler
-    return _get_handler(settings)
+    elif settings.getbool('LOG_ENABLED'):
+        handler = logging.StreamHandler()
+    else:
+        handler = logging.NullHandler()
+
+    handler.setFormatter(formatter)
+    handler.setLevel(settings.get('LOG_LEVEL'))
+    handler.addFilter(log.TopLevelFormatter(['scrapy']))
+    return handler
 
 
 class HubstorageLogHandler(logging.Handler):
