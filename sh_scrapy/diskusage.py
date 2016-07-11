@@ -81,7 +81,7 @@ class DiskUsage(object):
         msg = None
         if self.inodes_limit and inodes > self.inodes_limit:
             msg = 'inodes limit ({} > {})'.format(inodes, self.inodes_limit)
-        if self.space_limit and space > self.space_limit:
+        elif self.space_limit and space > self.space_limit:
             msg = 'space limit ({}M > {}M)'.format(space, self.space_limit)
         if msg:
             self.crawler.stats.set_value('diskusage/limit_reached', 1)
