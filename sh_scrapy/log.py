@@ -8,8 +8,8 @@ from sh_scrapy import hsref
 from sh_scrapy.compat import to_native_str
 
 
-ROTATING_LOG_MAX_BYTES = 1000000
-ROTATING_LOG_BACKUP_COUNT = 5
+LOG_ROTATING_MAX_BYTES = 1000000
+LOG_ROTATING_BACKUP_COUNT = 5
 # keep a global reference to stderr as it is redirected on log initialization
 _stderr = sys.stderr
 
@@ -80,10 +80,13 @@ def _patched_get_handler(settings):
     filename = settings.get('LOG_FILE')
     if filename:
         encoding = settings.get('LOG_ENCODING')
-        handler = RotatingFileHandler(
-            filename, encoding=encoding,
-            maxBytes=ROTATING_LOG_MAX_BYTES,
-            backupCount=ROTATING_LOG_BACKUP_COUNT)
+        maxbytes = settings.getint('LOG_ROTATING_MAX_BYTES',
+                                   LOG_ROTATING_MAX_BYTES)
+        backup_count = settings.getint('LOG_ROTATING_BACKUP_COUNT',
+                                       LOG_ROTATING_BACKUP_COUNT)
+        handler = RotatingFileHandler(filename, encoding=encoding,
+                                      maxBytes=maxbytes,
+                                      backupCount=backup_count)
         formatter = logging.Formatter(
             fmt=settings.get('LOG_FORMAT'),
             datefmt=settings.get('LOG_DATEFORMAT')
