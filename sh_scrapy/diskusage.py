@@ -17,7 +17,7 @@ from scrapy.utils.engine import get_engine_status
 logger = logging.getLogger(__name__)
 
 
-def get_folder_disk_usage(folders):
+def get_disk_usage(folders):
     """ Get disk usage for current user.
 
     :param folders: Folders to calculate disk usage for.
@@ -25,10 +25,10 @@ def get_folder_disk_usage(folders):
 
     :return: ``(inodes_count, space_bytes)`` tuple
     """
+    assert folders, 'There must be some folders to calculate disk usage'
     inodes = space = 0
-    find_process = Popen(
-        ['find'] + folders + ['-user', str(os.getuid()),
-        '-type', 'f', '-printf', '%s\n'], stdout=PIPE)
+    find_process = Popen(['find'] + folders + ['-user', str(os.getuid()),
+                         '-type', 'f', '-printf', '%s\n'], stdout=PIPE)
     awk_process = Popen(['awk', "{i++;s+=$1}END{print i\" \"s}"],
                         stdin=find_process.stdout, stdout=PIPE)
     try:
@@ -64,7 +64,7 @@ class DiskUsage(object):
         return cls(crawler)
 
     def engine_started(self):
-        inodes, space = get_folder_disk_usage(self.FOLDERS)
+        inodes, space = get_disk_usage(self.FOLDERS)
         self.crawler.stats.set_value('diskusage/inodes/startup', inodes)
         self.crawler.stats.set_value('diskusage/space/startup', space)
         self.task = task.LoopingCall(self._task_handler)
@@ -75,7 +75,7 @@ class DiskUsage(object):
             self.task.stop()
 
     def _task_handler(self):
-        inodes, space = get_folder_disk_usage(self.FOLDERS)
+        inodes, space = get_disk_usage(self.FOLDERS)
         self.crawler.stats.max_value('diskusage/inodes/max', inodes)
         self.crawler.stats.max_value('diskusage/space/max', space)
         msg = None
