@@ -1,5 +1,7 @@
-from scrapy import signals
-
+"""
+DiskQuota downloader and spider middlewares.
+The goal is to catch disk quota errors and stop spider gently.
+"""
 
 class DiskQuota(object):
 
