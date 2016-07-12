@@ -112,7 +112,6 @@ def _load_default_settings(s):
         'MEMUSAGE_LIMIT_MB': memory_limit,
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
-        'LOG_FILE': 'scrapy.log',
         'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
     }, priority='cmdline')
 
