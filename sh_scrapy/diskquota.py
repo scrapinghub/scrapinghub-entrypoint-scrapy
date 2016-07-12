@@ -3,6 +3,9 @@ DiskQuota downloader and spider middlewares.
 The goal is to catch disk quota errors and stop spider gently.
 """
 
+from scrapy.exceptions import NotConfigured
+
+
 class DiskQuota(object):
 
     def __init__(self, crawler):
@@ -16,7 +19,7 @@ class DiskQuota(object):
 
     def _is_disk_quota_error(self, error):
         if isinstance(error, IOError):
-            return error.errno == 122 and error.strerror == 'Disk quota exceeded'
+            return error.errno == 122
 
 
 class DiskQuotaDownloaderMiddleware(DiskQuota):
