@@ -88,8 +88,12 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
 
 
 def _load_default_settings(s):
+    downloader_middlewares = {
+        'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
+    }
     spider_middlewares = {
         'sh_scrapy.extension.HubstorageMiddleware': 0,
+        'sh_scrapy.diskquota.DiskQuotaSpiderMiddleware': 0,
     }
     extensions = {
         'scrapy.extensions.debug.StackTraceDump': 0,
@@ -103,6 +107,7 @@ def _load_default_settings(s):
     else:
         extensions['slybot.closespider.SlybotCloseSpider'] = 0
 
+    s.get('DOWNLOADER_MIDDLEWARES_BASE').update(downloader_middlewares)
     s.get('EXTENSIONS_BASE').update(extensions)
     s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
     memory_limit = int(os.environ.get('SHUB_JOB_MEMORY_LIMIT', 950))
@@ -110,6 +115,7 @@ def _load_default_settings(s):
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
         'MEMUSAGE_LIMIT_MB': memory_limit,
+        'DISK_QUOTA_STOP_ON_ERROR': True,
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
         'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
