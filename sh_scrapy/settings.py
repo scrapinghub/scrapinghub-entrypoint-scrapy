@@ -118,6 +118,7 @@ def _load_default_settings(s):
         'DISK_QUOTA_STOP_ON_ERROR': True,
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
+        'LOG_ENABLED': False,
         'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
     }, priority='cmdline')
 
