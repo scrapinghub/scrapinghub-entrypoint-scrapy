@@ -1,8 +1,11 @@
+from __future__ import print_function
+import logging
 import sys, os, tempfile
 from sh_scrapy.compat import to_native_str, is_string
 from scrapy.utils.project import get_project_settings
 
 
+logger = logging.getLogger(__name__)
 REPLACE_ADDONS_PATHS = {
     "hworker.bot.ext.page.PageStorageMiddleware":
         "scrapy_pagestorage.PageStorageMiddleware",
@@ -44,17 +47,34 @@ def _get_component_base(s, compkey):
     return compkey
 
 
-def _load_addons(addons, s, o):
-    for addon in addons:
-        if addon['path'].startswith('hworker'):
-            try:
-                import hworker
-            except ImportError:
-                if addon['path'] in REPLACE_ADDONS_PATHS:
-                    addon['path'] = REPLACE_ADDONS_PATHS[addon['path']]
-                else:
-                    continue  # ignore missing module
+def _get_action_on_missing_addons(settings):
+    for section in settings:
+        if 'ON_MISSING_ADDONS' in section:
+            level = section['ON_MISSING_ADDONS']
+            if level not in ['fail', 'error', 'warn']:
+                logger.warning("Wrong value for ON_MISSING_ADDONS: "
+                              "should be one of [fail,error,warn]. "
+                              "Set default 'warn' value.")
+                level = 'warn'
+            return level
+    return 'warn'
 
+
+def _load_addons(addons, s, o, on_missing_addons):
+    for addon in addons:
+        if addon['path'] in REPLACE_ADDONS_PATHS:
+            addon['path'] = REPLACE_ADDONS_PATHS[addon['path']]
+        module = addon['path'].rsplit('.', 1)[0]
+        try:
+            __import__(module)
+        except ImportError:
+            if on_missing_addons == 'warn':
+                logger.warning("Addon's module %s not found", module)
+                continue
+            elif on_missing_addons == 'error':
+                logger.error("Addon's module %s not found", module)
+                continue
+            raise
         skey = _get_component_base(s, addon['type'])
         components = s[skey]
         path = update_classpath(addon['path'])
@@ -75,7 +95,10 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(s)
-    _load_addons(enabled_addons, s, o)
+    on_missing_addons = _get_action_on_missing_addons([
+        job_settings, spider_settings,
+        organization_settings, project_settings])
+    _load_addons(enabled_addons, s, o, on_missing_addons)
     _update_settings(o, project_settings)
     _update_settings(o, organization_settings)
     if spider:
