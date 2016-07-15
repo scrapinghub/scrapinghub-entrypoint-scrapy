@@ -1,10 +1,11 @@
 from __future__ import print_function
-import warnings
+import logging
 import sys, os, tempfile
 from sh_scrapy.compat import to_native_str, is_string
 from scrapy.utils.project import get_project_settings
 
 
+logger = logging.getLogger(__name__)
 REPLACE_ADDONS_PATHS = {
     "hworker.bot.ext.page.PageStorageMiddleware":
         "scrapy_pagestorage.PageStorageMiddleware",
@@ -68,10 +69,10 @@ def _load_addons(addons, s, o, on_missing_addons):
             __import__(module)
         except ImportError:
             if on_missing_addons == 'warn':
-                warnings.warn("Addon's module %s not found" % module, Warning)
+                logger.warning("Addon's module %s not found", module)
                 continue
             elif on_missing_addons == 'error':
-                print("Addon's module %s not found" % module, file=sys.stderr)
+                logger.error("Addon's module %s not found", module)
                 continue
             raise
         skey = _get_component_base(s, addon['type'])
