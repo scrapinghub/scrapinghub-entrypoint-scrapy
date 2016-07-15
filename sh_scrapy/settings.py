@@ -65,7 +65,7 @@ def _load_addons(addons, s, o, on_missing_addons):
             addon['path'] = REPLACE_ADDONS_PATHS[addon['path']]
         module = addon['path'].rsplit('.', 1)[0]
         try:
-            import module
+            __import__(module)
         except ImportError:
             if on_missing_addons == 'warn':
                 warnings.warn("Addon's module %s not found" % module, Warning)
