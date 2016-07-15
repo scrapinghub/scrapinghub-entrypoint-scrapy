@@ -143,7 +143,7 @@ def test_get_component_base():
 def test_load_addons_void():
     addons = []
     settings = o = {}
-    _load_addons(addons, settings, o)
+    _load_addons(addons, settings, o, 'warn')
     assert addons == []
     assert settings == o == {}
 
@@ -152,7 +152,7 @@ def test_load_addons_no_spider_mwares_setting():
     addons = [TEST_ADDON]
     settings = o = {}
     with pytest.raises(KeyError) as excinfo:
-        _load_addons(addons, settings, o)
+        _load_addons(addons, settings, o, 'warn')
     assert 'SPIDER_MIDDLEWARES' in str(excinfo.value)
 
 
@@ -160,7 +160,7 @@ def test_load_addons_basic_usage():
     addons = [TEST_ADDON]
     settings = {'SPIDER_MIDDLEWARES': {}}
     o = {}
-    _load_addons(addons, settings, o)
+    _load_addons(addons, settings, o, 'warn')
     assert settings == o == {'SPIDER_MIDDLEWARES': {'some.addon.path': 10}}
 
 
@@ -171,7 +171,7 @@ def test_load_addons_basic_with_defaults():
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
         'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500}}
     o = {}
-    _load_addons(addons, settings, o)
+    _load_addons(addons, settings, o, 'warn')
     assert settings == {'SPIDER_MIDDLEWARES_BASE': {
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
         'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500,
@@ -186,7 +186,7 @@ def test_load_addons_hworker_import_ignore():
     addons[0]['path'] = 'hworker.some.module'
     settings = {'SPIDER_MIDDLEWARES': {}}
     o = {}
-    _load_addons(addons, settings, o)
+    _load_addons(addons, settings, o, 'warn')
     assert settings == {'SPIDER_MIDDLEWARES': {}}
     assert o == {}
 
@@ -197,7 +197,7 @@ def test_load_addons_hworker_import_replace():
         addons[0]['path'] = addon_path
         settings = {'SPIDER_MIDDLEWARES': {}}
         o = {}
-        _load_addons(addons, settings, o)
+        _load_addons(addons, settings, o, 'warn')
         assert settings == o == {'SPIDER_MIDDLEWARES': {replace_path: 10}}
 
 
