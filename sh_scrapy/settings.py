@@ -52,7 +52,7 @@ def _get_action_on_missing_addons(settings):
         if 'ON_MISSING_ADDONS' in section:
             level = section['ON_MISSING_ADDONS']
             if level not in ['fail', 'error', 'warn']:
-                warnings.warn("Wrong value for ON_MISSING_ADDONS: "
+                logger.warning("Wrong value for ON_MISSING_ADDONS: "
                               "should be one of [fail,error,warn]."
                               "Fallback to default 'warn' value")
                 level = 'warn'
