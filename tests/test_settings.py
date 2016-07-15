@@ -25,7 +25,7 @@ TEST_ADDON = {
     'default_settings': {},
     'type': 'SPIDER_MIDDLEWARES',
     'order': 10,
-    'path': 'some.addon.path',
+    'path': 'scrapy.spidermiddlewares.SomeExistingMware',
     'builtin': False,
     'needs_aws': False,
 }
@@ -161,7 +161,8 @@ def test_load_addons_basic_usage():
     settings = {'SPIDER_MIDDLEWARES': {}}
     o = {}
     _load_addons(addons, settings, o, 'warn')
-    assert settings == o == {'SPIDER_MIDDLEWARES': {'some.addon.path': 10}}
+    assert settings == o == {'SPIDER_MIDDLEWARES': {
+        'scrapy.spidermiddlewares.SomeExistingMware': 10}}
 
 
 def test_load_addons_basic_with_defaults():
@@ -175,30 +176,50 @@ def test_load_addons_basic_with_defaults():
     assert settings == {'SPIDER_MIDDLEWARES_BASE': {
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
         'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500,
-        'some.addon.path': 10}}
+        'scrapy.spidermiddlewares.SomeExistingMware': 10}}
     expected_o = settings.copy()
     expected_o['TEST_SETTING_A'] = 'TEST'
     assert o == expected_o
 
 
-def test_load_addons_hworker_import_ignore():
+def test_load_addons_hworker_fail_on_import():
+    addons = [TEST_ADDON.copy()]
+    addons[0]['path'] = 'hworker.some.module'
+    settings = {'SPIDER_MIDDLEWARES': {}}
+    with pytest.raises(ImportError):
+        _load_addons(addons, settings, {}, 'fail')
+
+
+def test_load_addons_hworker_error_on_import():
+    addons = [TEST_ADDON.copy()]
+    addons[0]['path'] = 'hworker.some.module'
+    settings = {'SPIDER_MIDDLEWARES': {}}
+    o = {}
+    _load_addons(addons, settings, o, 'error')
+    assert o == {}
+    assert settings == {'SPIDER_MIDDLEWARES': {}}
+
+
+def test_load_addons_hworker_warning_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
     settings = {'SPIDER_MIDDLEWARES': {}}
     o = {}
     _load_addons(addons, settings, o, 'warn')
-    assert settings == {'SPIDER_MIDDLEWARES': {}}
     assert o == {}
+    assert settings == {'SPIDER_MIDDLEWARES': {}}
 
 
+@mock.patch.dict('sh_scrapy.settings.REPLACE_ADDONS_PATHS',
+                 {'scrapy.spidermiddlewares.SomeExistingMware':
+                     'scrapy.spidermiddlewares.NewPath'})
 def test_load_addons_hworker_import_replace():
-    for addon_path, replace_path in REPLACE_ADDONS_PATHS.items():
-        addons = [TEST_ADDON.copy()]
-        addons[0]['path'] = addon_path
-        settings = {'SPIDER_MIDDLEWARES': {}}
-        o = {}
-        _load_addons(addons, settings, o, 'warn')
-        assert settings == o == {'SPIDER_MIDDLEWARES': {replace_path: 10}}
+    addons = [TEST_ADDON]
+    settings = {'SPIDER_MIDDLEWARES': {}}
+    o = {}
+    _load_addons(addons, settings, o, 'warn')
+    assert settings == o == {'SPIDER_MIDDLEWARES': {
+        'scrapy.spidermiddlewares.NewPath': 10}}
 
 
 def test_populate_settings_dont_fail():
