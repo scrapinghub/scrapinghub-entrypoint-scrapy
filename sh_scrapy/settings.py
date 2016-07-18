@@ -1,7 +1,8 @@
-from __future__ import print_function
 import logging
 import sys, os, tempfile
 from sh_scrapy.compat import to_native_str, is_string
+from scrapy.settings import BaseSettings
+from scrapy.utils.misc import load_object
 from scrapy.utils.project import get_project_settings
 
 
@@ -19,20 +20,26 @@ except ImportError:
     update_classpath = lambda x: x
 
 
-def _update_settings(o, d):
+def _update_settings(o, d, priority=10):
     # We need to convert settings to string since the S3 download handler
     # doesn't work if the AWS keys are passed as unicode. Other code may also
-    # depend on settings being str. TODO: we should test this
+    # depend on settings being str.
     for k, v in d.items():
         d[to_native_str(k)] = to_native_str(v) if is_string(v) else v
-    o.update(d)
+    o.update(d, priority=priority)
 
 
 def _load_autoscraping_settings(s, o):
-    o.setdefault('SPIDER_MANAGER_CLASS', 'slybot.spidermanager.ZipfileSlybotSpiderManager')
-    o.setdefault('SLYCLOSE_SPIDER_ENABLED', True)
-    o.setdefault('ITEM_PIPELINES', {})['slybot.dupefilter.DupeFilterPipeline'] = 0
-    o.setdefault('SLYDUPEFILTER_ENABLED', True)
+    settings = {
+        'SPIDER_MANAGER_CLASS': 'slybot.spidermanager.ZipfileSlybotSpiderManager',
+        'SLYCLOSE_SPIDER_ENABLED': True,
+        'ITEM_PIPELINES': {},
+        'SLYDUPEFILTER_ENABLED': True
+    }
+    for key, value in settings.items():
+        if key not in o:
+            o.set(key, value)
+    o['ITEM_PIPELINES']['slybot.dupefilter.DupeFilterPipeline'] = 0
 
 
 def _maybe_load_autoscraping_project(s, o):
@@ -47,46 +54,45 @@ def _get_component_base(s, compkey):
     return compkey
 
 
-def _get_action_on_missing_addons(settings):
-    for section in settings:
-        if 'ON_MISSING_ADDONS' in section:
-            level = section['ON_MISSING_ADDONS']
-            if level not in ['fail', 'error', 'warn']:
-                logger.warning("Wrong value for ON_MISSING_ADDONS: "
-                              "should be one of [fail,error,warn]. "
-                              "Set default 'warn' value.")
-                level = 'warn'
-            return level
-    return 'warn'
+def _get_action_on_missing_addons(o):
+    on_missing_addons = o.get('ON_MISSING_ADDONS', 'warn')
+    if on_missing_addons not in ['fail', 'error', 'warn']:
+        logger.warning(
+            "Wrong value for ON_MISSING_ADDONS: should be one of "
+            "[fail,error,warn]. Set default 'warn' value.")
+        on_missing_addons = 'warn'
+    return on_missing_addons
 
 
-def _load_addons(addons, s, o, on_missing_addons):
+def _load_addons(addons, s, o, priority=0):
+    on_missing_addons = _get_action_on_missing_addons(o)
     for addon in addons:
-        if addon['path'] in REPLACE_ADDONS_PATHS:
-            addon['path'] = REPLACE_ADDONS_PATHS[addon['path']]
-        module = addon['path'].rsplit('.', 1)[0]
+        addon_path = addon['path']
+        if addon_path in REPLACE_ADDONS_PATHS:
+            addon_path = REPLACE_ADDONS_PATHS[addon_path]
         try:
-            __import__(module)
-        except ImportError:
+            load_object(addon_path)
+        except (ImportError, NameError, ValueError) as exc:
+            message = "Addon import error {}:\n {}".format(addon_path, exc)
             if on_missing_addons == 'warn':
-                logger.warning("Addon's module %s not found", module)
+                logger.warning(message)
                 continue
             elif on_missing_addons == 'error':
-                logger.error("Addon's module %s not found", module)
+                logger.error(message)
                 continue
             raise
         skey = _get_component_base(s, addon['type'])
-        components = s[skey]
-        path = update_classpath(addon['path'])
+        components = s.get(skey, {})
+        path = update_classpath(addon_path)
         components[path] = addon['order']
         o[skey] = components
-        _update_settings(o, addon['default_settings'])
+        _update_settings(o, addon['default_settings'], priority)
 
 
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     s = get_project_settings()
-    o = {}
+    o = BaseSettings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
@@ -95,18 +101,16 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(s)
-    on_missing_addons = _get_action_on_missing_addons([
-        job_settings, spider_settings,
-        organization_settings, project_settings])
-    _load_addons(enabled_addons, s, o, on_missing_addons)
-    _update_settings(o, project_settings)
-    _update_settings(o, organization_settings)
+    _update_settings(o, project_settings, priority=10)
+    _update_settings(o, organization_settings, priority=20)
     if spider:
-        _update_settings(o, spider_settings)
+        _update_settings(o, spider_settings, priority=30)
         _maybe_load_autoscraping_project(s, o)
         o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
-    _update_settings(o, job_settings)
-    s.setdict(o, priority='cmdline')
+    _update_settings(o, job_settings, priority=40)
+    # Load addons only after we gather all settings
+    _load_addons(enabled_addons, s, o, priority=0)
+    s.setdict(o.copy_to_dict(), priority='cmdline')
     return s
 
 
