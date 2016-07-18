@@ -167,7 +167,7 @@ def test_load_addons_void():
 
 def test_load_addons_no_spider_mwares_setting():
     addons = [TEST_ADDON]
-    settings, o = BaseSettings(), BaseSettings()
+    settings, o = Settings(), BaseSettings()
     _load_addons(addons, settings, o)
 
 

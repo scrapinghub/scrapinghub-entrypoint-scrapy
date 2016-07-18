@@ -13,6 +13,7 @@ REPLACE_ADDONS_PATHS = {
     "hworker.bot.ext.persistence.DotScrapyPersistence":
         "scrapy_dotpersistence.DotScrapyPersistence",
 }
+SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
 
 try:
     from scrapy.utils.deprecate import update_classpath
@@ -20,22 +21,28 @@ except ImportError:
     update_classpath = lambda x: x
 
 
-def _update_settings(o, d, priority=10):
-    # We need to convert settings to string since the S3 download handler
-    # doesn't work if the AWS keys are passed as unicode. Other code may also
-    # depend on settings being str.
+def _update_settings(o, d, priority='default'):
+    """
+    We need to convert settings to string since the S3 download handler
+    doesn't work if the AWS keys are passed as unicode. Other code may also
+    depend on settings being str.
+
+    :param o: auxiliary BaseSettings object to merge provided settings
+    :type o: scrapy.settings.BaseSettings instance
+
+    :param d: final Settings object to run a job
+    :type d: scrapy.settings.Settings instance
+    """
     for k, v in d.items():
         d[to_native_str(k)] = to_native_str(v) if is_string(v) else v
     o.update(d, priority=priority)
 
 
 def _load_autoscraping_settings(s, o):
-    settings = {
-        'SPIDER_MANAGER_CLASS': 'slybot.spidermanager.ZipfileSlybotSpiderManager',
-        'SLYCLOSE_SPIDER_ENABLED': True,
-        'ITEM_PIPELINES': {},
-        'SLYDUPEFILTER_ENABLED': True
-    }
+    settings = {'ITEM_PIPELINES': {},
+                'SLYDUPEFILTER_ENABLED': True,
+                'SLYCLOSE_SPIDER_ENABLED': True,
+                'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
     for key, value in settings.items():
         if key not in o:
             o.set(key, value)
@@ -82,7 +89,7 @@ def _load_addons(addons, s, o, priority=0):
                 continue
             raise
         skey = _get_component_base(s, addon['type'])
-        components = s.get(skey, {})
+        components = s[skey]
         path = update_classpath(addon_path)
         components[path] = addon['order']
         o[skey] = components
