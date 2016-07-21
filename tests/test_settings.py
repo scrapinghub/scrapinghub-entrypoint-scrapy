@@ -89,21 +89,21 @@ def test_update_settings_check_unicode_in_py3():
 
 def test_maybe_load_autoscraping_project_no_spider_type_env():
     result = {}
-    _maybe_load_autoscraping_project({}, result)
+    _maybe_load_autoscraping_project(result)
     assert result == {}
 
 
 @mock.patch.dict(os.environ, {'SHUB_SPIDER_TYPE': 'custom'})
 def test_maybe_load_autoscraping_project_custom_type():
     result = {}
-    _maybe_load_autoscraping_project({}, result)
+    _maybe_load_autoscraping_project(result)
     assert result == {}
 
 
 @mock.patch.dict(os.environ, {'SHUB_SPIDER_TYPE': 'auto'})
 def test_maybe_load_autoscraping_project_ok():
     result = BaseSettings({'SPIDER_MANAGER_CLASS': 'test.class'})
-    _maybe_load_autoscraping_project({}, result)
+    _maybe_load_autoscraping_project(result)
     assert result == {
         'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
         'PROJECT_ZIPFILE': 'project-slybot.zip',
