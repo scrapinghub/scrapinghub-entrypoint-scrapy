@@ -38,20 +38,14 @@ def _update_settings(o, d, priority='default'):
     o.update(d, priority=priority)
 
 
-def _load_autoscraping_settings(s, o):
-    settings = {'ITEM_PIPELINES': {},
-                'SLYDUPEFILTER_ENABLED': True,
-                'SLYCLOSE_SPIDER_ENABLED': True,
-                'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
-    for key, value in settings.items():
-        if key not in o:
-            o.set(key, value)
-    o['ITEM_PIPELINES']['slybot.dupefilter.DupeFilterPipeline'] = 0
-
-
-def _maybe_load_autoscraping_project(s, o):
+def _maybe_load_autoscraping_project(s, o, priority=0):
     if os.environ.get('SHUB_SPIDER_TYPE') in ('auto', 'portia'):
-        _load_autoscraping_settings(s, o)
+        settings = {'ITEM_PIPELINES': {},
+                    'SLYDUPEFILTER_ENABLED': True,
+                    'SLYCLOSE_SPIDER_ENABLED': True,
+                    'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
+        _update_settings(o, settings, priority=priority)
+        o['ITEM_PIPELINES']['slybot.dupefilter.DupeFilterPipeline'] = 0
         o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
 
 
@@ -112,7 +106,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     _update_settings(o, organization_settings, priority=20)
     if spider:
         _update_settings(o, spider_settings, priority=30)
-        _maybe_load_autoscraping_project(s, o)
+        _maybe_load_autoscraping_project(s, o, priority=0)
         o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
     _update_settings(o, job_settings, priority=40)
     # Load addons only after we gather all settings

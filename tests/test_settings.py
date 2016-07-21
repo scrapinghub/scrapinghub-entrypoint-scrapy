@@ -5,7 +5,6 @@ import mock
 import pytest
 from scrapy.settings import BaseSettings, Settings, SettingsAttribute
 from sh_scrapy.settings import _update_settings
-from sh_scrapy.settings import _load_autoscraping_settings
 from sh_scrapy.settings import _maybe_load_autoscraping_project
 from sh_scrapy.settings import _get_component_base
 from sh_scrapy.settings import _get_action_on_missing_addons
@@ -86,29 +85,6 @@ def test_update_settings_check_unicode_in_py3():
     test = BaseSettings({})
     _update_settings(test, {'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test == {'\xf1e\xf1e\xf1e': 'test'}
-
-
-def test_load_autoscraping_settings_void_settings():
-    settings = BaseSettings({})
-    _load_autoscraping_settings({}, settings)
-    assert settings.copy_to_dict() == {
-        'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
-        'SLYCLOSE_SPIDER_ENABLED': True,
-        'SLYDUPEFILTER_ENABLED': True,
-        'SPIDER_MANAGER_CLASS':
-            'slybot.spidermanager.ZipfileSlybotSpiderManager'}
-
-
-def test_load_autoscraping_settings_skip_existing():
-    settings = BaseSettings({
-        'SPIDER_MANAGER_CLASS': 'some.class',
-        'SLYDUPEFILTER_ENABLED': False})
-    _load_autoscraping_settings({}, settings)
-    assert settings == {
-        'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
-        'SLYCLOSE_SPIDER_ENABLED': True,
-        'SLYDUPEFILTER_ENABLED': False,
-        'SPIDER_MANAGER_CLASS': 'some.class'}
 
 
 def test_maybe_load_autoscraping_project_no_spider_type_env():
