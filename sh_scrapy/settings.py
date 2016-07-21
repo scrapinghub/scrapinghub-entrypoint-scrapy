@@ -33,7 +33,7 @@ def _update_settings(o, d, priority='default'):
     :param d: final Settings object to run a job
     :type d: scrapy.settings.Settings instance
     """
-    for k, v in d.items():
+    for k, v in list(d.items()):
         d[to_native_str(k)] = to_native_str(v) if is_string(v) else v
     o.update(d, priority=priority)
 
