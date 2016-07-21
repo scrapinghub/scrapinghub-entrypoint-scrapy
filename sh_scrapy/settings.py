@@ -21,21 +21,21 @@ except ImportError:
     update_classpath = lambda x: x
 
 
-def _update_settings(o, d, priority='default'):
+def _update_settings(o, changes, priority='default'):
     """
     We need to convert settings to string since the S3 download handler
     doesn't work if the AWS keys are passed as unicode. Other code may also
     depend on settings being str.
 
-    :param o: auxiliary BaseSettings object to merge provided settings
+    :param o: BaseSettings object to merge settings provided by d
     :type o: scrapy.settings.BaseSettings instance
 
-    :param d: final Settings object to run a job
-    :type d: scrapy.settings.Settings instance
+    :param changes: a settings dict to update o with given priority
+    :type changes: a dict
     """
-    for k, v in list(d.items()):
-        d[to_native_str(k)] = to_native_str(v) if is_string(v) else v
-    o.update(d, priority=priority)
+    for k, v in list(changes.items()):
+        changes[to_native_str(k)] = to_native_str(v) if is_string(v) else v
+    o.update(changes, priority=priority)
 
 
 def _maybe_load_autoscraping_project(o, priority=0):
