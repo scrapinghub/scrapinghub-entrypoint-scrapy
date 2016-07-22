@@ -142,21 +142,14 @@ def test_load_addons_void():
     assert settings == o == {}
 
 
-def test_load_addons_no_spider_mwares_setting():
-    addons = [TEST_ADDON]
-    settings, o = Settings(), BaseSettingsWithNativeStrings()
-    _load_addons(addons, settings, o)
-
-
 def test_load_addons_basic_usage():
     addons = [TEST_ADDON]
     settings = BaseSettings({'SPIDER_MIDDLEWARES': {}})
-    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
+    o = BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
     assert settings.copy_to_dict() == {'SPIDER_MIDDLEWARES': {
             TEST_ADDON['path']: 10}}
     assert o.copy_to_dict() == {
-        'ON_MISSING_ADDONS': 'warn',
         'SPIDER_MIDDLEWARES': {TEST_ADDON['path']: 10}}
 
 
