@@ -14,6 +14,7 @@ REPLACE_ADDONS_PATHS = {
         "scrapy_dotpersistence.DotScrapyPersistence",
 }
 SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
+SLYBOT_DUPE_FILTER = 'slybot.dupefilter.DupeFilterPipeline'
 
 try:
     from scrapy.utils.deprecate import update_classpath
@@ -35,25 +36,25 @@ class BaseSettingsWithNativeStrings(BaseSettings):
             priority=priority)
 
 
-def _maybe_load_autoscraping_project(o, priority=0):
+def _maybe_load_autoscraping_project(settings, priority=0):
     if os.environ.get('SHUB_SPIDER_TYPE') in ('auto', 'portia'):
-        settings = {'ITEM_PIPELINES': {},
-                    'SLYDUPEFILTER_ENABLED': True,
-                    'SLYCLOSE_SPIDER_ENABLED': True,
-                    'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
-        o.update(settings, priority=priority)
-        o['ITEM_PIPELINES']['slybot.dupefilter.DupeFilterPipeline'] = 0
-        o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
+        slybot_settings = {'ITEM_PIPELINES': {},
+                           'SLYDUPEFILTER_ENABLED': True,
+                           'SLYCLOSE_SPIDER_ENABLED': True,
+                           'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
+        settings.update(slybot_settings, priority=priority)
+        settings['ITEM_PIPELINES'][SLYBOT_DUPE_FILTER] = 0
+        settings["PROJECT_ZIPFILE"] = 'project-slybot.zip'
 
 
-def _get_component_base(s, compkey):
-    if s.get(compkey + '_BASE') is not None:
+def _get_component_base(settings, compkey):
+    if settings.get(compkey + '_BASE') is not None:
         return compkey + '_BASE'
     return compkey
 
 
-def _get_action_on_missing_addons(o):
-    on_missing_addons = o.get('ON_MISSING_ADDONS', 'warn')
+def _get_action_on_missing_addons(settings):
+    on_missing_addons = settings.get('ON_MISSING_ADDONS', 'warn')
     if on_missing_addons not in ['fail', 'error', 'warn']:
         logger.warning(
             "Wrong value for ON_MISSING_ADDONS: should be one of "
@@ -62,8 +63,8 @@ def _get_action_on_missing_addons(o):
     return on_missing_addons
 
 
-def _load_addons(addons, s, o, priority=0):
-    on_missing_addons = _get_action_on_missing_addons(o)
+def _load_addons(addons, settings, merged_settings, priority=0):
+    on_missing_addons = _get_action_on_missing_addons(merged_settings)
     for addon in addons:
         addon_path = addon['path']
         if addon_path in REPLACE_ADDONS_PATHS:
@@ -79,18 +80,18 @@ def _load_addons(addons, s, o, priority=0):
                 logger.error(message)
                 continue
             raise
-        skey = _get_component_base(s, addon['type'])
-        components = s[skey]
+        skey = _get_component_base(settings, addon['type'])
+        components = settings[skey]
         path = update_classpath(addon_path)
         components[path] = addon['order']
-        o[skey] = components
-        o.update(addon['default_settings'], priority)
+        merged_settings[skey] = components
+        merged_settings.update(addon['default_settings'], priority)
 
 
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
-    s = get_project_settings()
-    o = BaseSettingsWithNativeStrings()
+    settings = get_project_settings()
+    merged_settings = BaseSettingsWithNativeStrings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
@@ -98,21 +99,21 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     spider_settings = apisettings.setdefault('spider_settings', {})
     job_settings = apisettings.setdefault('job_settings', {})
 
-    defaults_func(s)
-    o.update(project_settings, priority=10)
-    o.update(organization_settings, priority=20)
+    defaults_func(settings)
+    merged_settings.update(project_settings, priority=10)
+    merged_settings.update(organization_settings, priority=20)
     if spider:
-        o.update(spider_settings, priority=30)
-        _maybe_load_autoscraping_project(o, priority=0)
-        o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
-    o.update(job_settings, priority=40)
+        merged_settings.update(spider_settings, priority=30)
+        _maybe_load_autoscraping_project(merged_settings, priority=0)
+        merged_settings['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
+    merged_settings.update(job_settings, priority=40)
     # Load addons only after we gather all settings
-    _load_addons(enabled_addons, s, o, priority=0)
-    s.setdict(o.copy_to_dict(), priority='cmdline')
-    return s
+    _load_addons(enabled_addons, settings, merged_settings, priority=0)
+    settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')
+    return settings
 
 
-def _load_default_settings(s):
+def _load_default_settings(settings):
     downloader_middlewares = {
         'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
     }
@@ -132,11 +133,11 @@ def _load_default_settings(s):
     else:
         extensions['slybot.closespider.SlybotCloseSpider'] = 0
 
-    s.get('DOWNLOADER_MIDDLEWARES_BASE').update(downloader_middlewares)
-    s.get('EXTENSIONS_BASE').update(extensions)
-    s.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
+    settings.get('DOWNLOADER_MIDDLEWARES_BASE').update(downloader_middlewares)
+    settings.get('EXTENSIONS_BASE').update(extensions)
+    settings.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
     memory_limit = int(os.environ.get('SHUB_JOB_MEMORY_LIMIT', 950))
-    s.setdict({
+    settings.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
         'MEMUSAGE_ENABLED': True,
         'MEMUSAGE_LIMIT_MB': memory_limit,
