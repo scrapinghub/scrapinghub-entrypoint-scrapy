@@ -102,7 +102,8 @@ def test_maybe_load_autoscraping_project_custom_type():
 
 @mock.patch.dict(os.environ, {'SHUB_SPIDER_TYPE': 'auto'})
 def test_maybe_load_autoscraping_project_ok():
-    result = BaseSettings({'SPIDER_MANAGER_CLASS': 'test.class'})
+    result = BaseSettingsWithNativeStrings(
+        {'SPIDER_MANAGER_CLASS': 'test.class'})
     _maybe_load_autoscraping_project(result)
     assert result == {
         'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
@@ -135,7 +136,7 @@ def test_get_action_on_missing_addons_warn_if_wrong_value():
 
 def test_load_addons_void():
     addons = []
-    settings, o = BaseSettings(), BaseSettings()
+    settings, o = BaseSettings(), BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
     assert addons == []
     assert settings == o == {}
@@ -143,14 +144,14 @@ def test_load_addons_void():
 
 def test_load_addons_no_spider_mwares_setting():
     addons = [TEST_ADDON]
-    settings, o = Settings(), BaseSettings()
+    settings, o = Settings(), BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
 
 
 def test_load_addons_basic_usage():
     addons = [TEST_ADDON]
     settings = BaseSettings({'SPIDER_MIDDLEWARES': {}})
-    o = BaseSettings({'ON_MISSING_ADDONS': 'warn'})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
     _load_addons(addons, settings, o)
     assert settings.copy_to_dict() == {'SPIDER_MIDDLEWARES': {
             TEST_ADDON['path']: 10}}
@@ -165,7 +166,7 @@ def test_load_addons_basic_with_defaults():
     settings = {'SPIDER_MIDDLEWARES_BASE': {
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
         'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500}}
-    o = BaseSettings({'ON_MISSING_ADDONS': 'warn'})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
     _load_addons(addons, settings, o)
     assert settings == {'SPIDER_MIDDLEWARES_BASE': {
         TEST_ADDON['path']: 10,
@@ -182,7 +183,7 @@ def test_load_addons_hworker_fail_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
     settings = BaseSettings({'SPIDER_MIDDLEWARES': {}})
-    o = BaseSettings({'ON_MISSING_ADDONS': 'fail'})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'fail'})
     with pytest.raises(ImportError):
         _load_addons(addons, settings, o)
 
@@ -191,7 +192,7 @@ def test_load_addons_hworker_error_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
     settings = {'SPIDER_MIDDLEWARES': {}}
-    o = BaseSettings({'ON_MISSING_ADDONS': 'error'})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'error'})
     _load_addons(addons, settings, o)
     assert o.copy_to_dict() == {'ON_MISSING_ADDONS': 'error'}
     assert settings == {'SPIDER_MIDDLEWARES': {}}
@@ -201,7 +202,7 @@ def test_load_addons_hworker_warning_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
     settings = {'SPIDER_MIDDLEWARES': {}}
-    o = BaseSettings({'ON_MISSING_ADDONS': 'warn'})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
     _load_addons(addons, settings, o)
     assert o.copy_to_dict() == {'ON_MISSING_ADDONS': 'warn'}
     assert settings == {'SPIDER_MIDDLEWARES': {}}
@@ -212,7 +213,7 @@ def test_load_addons_hworker_warning_on_import():
 def test_load_addons_hworker_import_replace():
     addons = [TEST_ADDON]
     settings = {'SPIDER_MIDDLEWARES': {}}
-    o = BaseSettings()
+    o = BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
     assert o.copy_to_dict() == {'SPIDER_MIDDLEWARES': {
         'scrapy.utils.misc.arg_to_iter': 10}}
