@@ -1,7 +1,7 @@
 import logging
 import sys, os, tempfile
 from sh_scrapy.compat import to_native_str, is_string
-from scrapy.settings import BaseSettings
+from scrapy.settings import Settings
 from scrapy.utils.misc import load_object
 from scrapy.utils.project import get_project_settings
 
@@ -22,15 +22,19 @@ except ImportError:
     update_classpath = lambda x: x
 
 
-class BaseSettingsWithNativeStrings(BaseSettings):
+class EntrypointSettings(Settings):
     """
     We need to convert settings to string since the S3 download handler
     doesn't work if the AWS keys are passed as unicode. Other code may
     also depend on settings being str.
     """
 
+    def __init__(self):
+        super(EntrypointSettings, self).__init__()
+        self.attributes = {}
+
     def set(self, name, value, priority='project'):
-        super(BaseSettingsWithNativeStrings, self).set(
+        super(EntrypointSettings, self).set(
             to_native_str(name),
             to_native_str(value) if is_string(value) else value,
             priority=priority)
@@ -91,7 +95,7 @@ def _load_addons(addons, settings, merged_settings, priority=0):
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     settings = get_project_settings()
-    merged_settings = BaseSettingsWithNativeStrings()
+    merged_settings = EntrypointSettings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
