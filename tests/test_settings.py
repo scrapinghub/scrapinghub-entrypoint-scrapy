@@ -3,11 +3,11 @@ import os
 import sys
 import mock
 import pytest
-from scrapy.settings import Settings, SettingsAttribute
-from sh_scrapy.settings import _update_settings
-from sh_scrapy.settings import _load_autoscraping_settings
+from scrapy.settings import BaseSettings, Settings, SettingsAttribute
+from sh_scrapy.settings import BaseSettingsWithNativeStrings
 from sh_scrapy.settings import _maybe_load_autoscraping_project
 from sh_scrapy.settings import _get_component_base
+from sh_scrapy.settings import _get_action_on_missing_addons
 from sh_scrapy.settings import _load_addons
 from sh_scrapy.settings import _populate_settings_base
 from sh_scrapy.settings import _load_default_settings
@@ -25,47 +25,47 @@ TEST_ADDON = {
     'default_settings': {},
     'type': 'SPIDER_MIDDLEWARES',
     'order': 10,
-    'path': 'some.addon.path',
+    'path': 'scrapy.utils.misc.load_object',
     'builtin': False,
     'needs_aws': False,
 }
 
 
 def test_update_settings_void_dictionaries():
-    test = {}
-    _update_settings(test, {})
-    assert test == {}
+    test = BaseSettingsWithNativeStrings()
+    test.update( {}, 10)
+    assert test.copy_to_dict() == {}
 
 
 def test_update_settings_base_test():
-    test = {}
-    _update_settings(test, {'a': 'b'})
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 'b'}, 10)
     assert test == {'a': 'b'}
 
 
 def test_update_settings_base_test2():
-    test = {}
-    _update_settings(test, {'a': 'b', 'c': 'd'})
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 'b', 'c': 'd'}, 10)
     assert test == {'a': 'b', 'c': 'd'}
 
 
 def test_update_settings_dont_fail_on_non_string():
-    test = {}
-    _update_settings(test, {'a': 3})
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 3}, 10)
     assert test == {'a': 3}
 
 
 def test_update_settings_update_existing_value():
-    test = {'a': 'b', 'c': 'd'}
-    _update_settings(test, {'c': 'e', 'f': 'g'})
-    assert test == {'a': 'b', 'c': 'e', 'f': 'g'}
+    test = BaseSettingsWithNativeStrings({'a': 'b', 'c': 'd'}, priority=10)
+    test.update({'c': 'e', 'f': 'g'}, 10)
+    assert test.copy_to_dict() == {'a': 'b', 'c': 'e', 'f': 'g'}
 
 
 @pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
 def test_update_settings_check_unicode_in_py2_key():
     # a dict entry is duplicated as unicode doesn't match native str value
-    test = {}
-    _update_settings(test, {'\xf1e\xf1e\xf1e': 'test'})
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test == {'\xf1e\xf1e\xf1e': 'test',
                     to_native_str('\xf1e\xf1e\xf1e'): 'test'}
 
@@ -73,8 +73,8 @@ def test_update_settings_check_unicode_in_py2_key():
 @pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
 def test_update_settings_check_unicode_in_py2_key_value():
     # a dict entry is duplicated as unicode doesn't match native str value
-    test = {}
-    _update_settings(test, {'\xf1e\xf1e\xf1e': '\xf1e\xf1e'})
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': '\xf1e\xf1e'}, 10)
     assert test == {
         '\xf1e\xf1e\xf1e': '\xf1e\xf1e',
         to_native_str('\xf1e\xf1e\xf1e'): to_native_str('\xf1e\xf1e')}
@@ -82,50 +82,29 @@ def test_update_settings_check_unicode_in_py2_key_value():
 
 @pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")
 def test_update_settings_check_unicode_in_py3():
-    test = {}
-    _update_settings(test, {'\xf1e\xf1e\xf1e': 'test'})
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test == {'\xf1e\xf1e\xf1e': 'test'}
-
-
-def test_load_autoscraping_settings_void_settings():
-    settings = {}
-    _load_autoscraping_settings({}, settings)
-    assert settings == {
-        'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
-        'SLYCLOSE_SPIDER_ENABLED': True,
-        'SLYDUPEFILTER_ENABLED': True,
-        'SPIDER_MANAGER_CLASS':
-            'slybot.spidermanager.ZipfileSlybotSpiderManager'}
-
-
-def test_load_autoscraping_settings_skip_existing():
-    settings = {'SPIDER_MANAGER_CLASS': 'some.class',
-                'SLYDUPEFILTER_ENABLED': False}
-    _load_autoscraping_settings({}, settings)
-    assert settings == {
-        'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
-        'SLYCLOSE_SPIDER_ENABLED': True,
-        'SLYDUPEFILTER_ENABLED': False,
-        'SPIDER_MANAGER_CLASS': 'some.class'}
 
 
 def test_maybe_load_autoscraping_project_no_spider_type_env():
     result = {}
-    _maybe_load_autoscraping_project({}, result)
+    _maybe_load_autoscraping_project(result)
     assert result == {}
 
 
 @mock.patch.dict(os.environ, {'SHUB_SPIDER_TYPE': 'custom'})
 def test_maybe_load_autoscraping_project_custom_type():
     result = {}
-    _maybe_load_autoscraping_project({}, result)
+    _maybe_load_autoscraping_project(result)
     assert result == {}
 
 
 @mock.patch.dict(os.environ, {'SHUB_SPIDER_TYPE': 'auto'})
 def test_maybe_load_autoscraping_project_ok():
-    result = {'SPIDER_MANAGER_CLASS': 'test.class'}
-    _maybe_load_autoscraping_project({}, result)
+    result = BaseSettingsWithNativeStrings(
+        {'SPIDER_MANAGER_CLASS': 'test.class'})
+    _maybe_load_autoscraping_project(result)
     assert result == {
         'ITEM_PIPELINES': {'slybot.dupefilter.DupeFilterPipeline': 0},
         'PROJECT_ZIPFILE': 'project-slybot.zip',
@@ -140,28 +119,38 @@ def test_get_component_base():
     assert _get_component_base({'TEST_BASE': 'VAL'}, 'TEST') == 'TEST_BASE'
 
 
+def test_get_action_on_missing_addons_default():
+    o = BaseSettings()
+    assert _get_action_on_missing_addons(o) == 'warn'
+
+
+def test_get_action_on_missing_addons_base():
+    o = BaseSettings({'ON_MISSING_ADDONS': 'fail'})
+    assert _get_action_on_missing_addons(o) == 'fail'
+
+
+def test_get_action_on_missing_addons_warn_if_wrong_value():
+    o = BaseSettings({'ON_MISSING_ADDONS': 'wrong'})
+    assert _get_action_on_missing_addons(o) == 'warn'
+
+
 def test_load_addons_void():
     addons = []
-    settings = o = {}
+    settings, o = BaseSettings(), BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
     assert addons == []
     assert settings == o == {}
 
 
-def test_load_addons_no_spider_mwares_setting():
-    addons = [TEST_ADDON]
-    settings = o = {}
-    with pytest.raises(KeyError) as excinfo:
-        _load_addons(addons, settings, o)
-    assert 'SPIDER_MIDDLEWARES' in str(excinfo.value)
-
-
 def test_load_addons_basic_usage():
     addons = [TEST_ADDON]
-    settings = {'SPIDER_MIDDLEWARES': {}}
-    o = {}
+    settings = BaseSettings({'SPIDER_MIDDLEWARES': {}})
+    o = BaseSettingsWithNativeStrings()
     _load_addons(addons, settings, o)
-    assert settings == o == {'SPIDER_MIDDLEWARES': {'some.addon.path': 10}}
+    assert settings.copy_to_dict() == {'SPIDER_MIDDLEWARES': {
+            TEST_ADDON['path']: 10}}
+    assert o.copy_to_dict() == {
+        'SPIDER_MIDDLEWARES': {TEST_ADDON['path']: 10}}
 
 
 def test_load_addons_basic_with_defaults():
@@ -170,35 +159,57 @@ def test_load_addons_basic_with_defaults():
     settings = {'SPIDER_MIDDLEWARES_BASE': {
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
         'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500}}
-    o = {}
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
     _load_addons(addons, settings, o)
     assert settings == {'SPIDER_MIDDLEWARES_BASE': {
+        TEST_ADDON['path']: 10,
         'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware': 50,
-        'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500,
-        'some.addon.path': 10}}
+        'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': 500
+    }}
     expected_o = settings.copy()
     expected_o['TEST_SETTING_A'] = 'TEST'
-    assert o == expected_o
+    expected_o['ON_MISSING_ADDONS'] = 'warn'
+    assert o.copy_to_dict() == expected_o
 
 
-def test_load_addons_hworker_import_ignore():
+def test_load_addons_hworker_fail_on_import():
+    addons = [TEST_ADDON.copy()]
+    addons[0]['path'] = 'hworker.some.module'
+    settings = BaseSettings({'SPIDER_MIDDLEWARES': {}})
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'fail'})
+    with pytest.raises(ImportError):
+        _load_addons(addons, settings, o)
+
+
+def test_load_addons_hworker_error_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
     settings = {'SPIDER_MIDDLEWARES': {}}
-    o = {}
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'error'})
     _load_addons(addons, settings, o)
+    assert o.copy_to_dict() == {'ON_MISSING_ADDONS': 'error'}
     assert settings == {'SPIDER_MIDDLEWARES': {}}
-    assert o == {}
 
 
+def test_load_addons_hworker_warning_on_import():
+    addons = [TEST_ADDON.copy()]
+    addons[0]['path'] = 'hworker.some.module'
+    settings = {'SPIDER_MIDDLEWARES': {}}
+    o = BaseSettingsWithNativeStrings({'ON_MISSING_ADDONS': 'warn'})
+    _load_addons(addons, settings, o)
+    assert o.copy_to_dict() == {'ON_MISSING_ADDONS': 'warn'}
+    assert settings == {'SPIDER_MIDDLEWARES': {}}
+
+
+@mock.patch.dict('sh_scrapy.settings.REPLACE_ADDONS_PATHS',
+                 {TEST_ADDON['path']: 'scrapy.utils.misc.arg_to_iter'})
 def test_load_addons_hworker_import_replace():
-    for addon_path, replace_path in REPLACE_ADDONS_PATHS.items():
-        addons = [TEST_ADDON.copy()]
-        addons[0]['path'] = addon_path
-        settings = {'SPIDER_MIDDLEWARES': {}}
-        o = {}
-        _load_addons(addons, settings, o)
-        assert settings == o == {'SPIDER_MIDDLEWARES': {replace_path: 10}}
+    addons = [TEST_ADDON]
+    settings = {'SPIDER_MIDDLEWARES': {}}
+    o = BaseSettingsWithNativeStrings()
+    _load_addons(addons, settings, o)
+    assert o.copy_to_dict() == {'SPIDER_MIDDLEWARES': {
+        'scrapy.utils.misc.arg_to_iter': 10}}
 
 
 def test_populate_settings_dont_fail():
