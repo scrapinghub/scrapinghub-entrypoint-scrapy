@@ -21,21 +21,18 @@ except ImportError:
     update_classpath = lambda x: x
 
 
-def _update_settings(o, changes, priority='default'):
+class BaseSettingsWithNativeStrings(BaseSettings):
     """
     We need to convert settings to string since the S3 download handler
-    doesn't work if the AWS keys are passed as unicode. Other code may also
-    depend on settings being str.
-
-    :param o: BaseSettings object to merge settings provided by d
-    :type o: scrapy.settings.BaseSettings instance
-
-    :param changes: a settings dict to update o with given priority
-    :type changes: a dict
+    doesn't work if the AWS keys are passed as unicode. Other code may
+    also depend on settings being str.
     """
-    for k, v in list(changes.items()):
-        changes[to_native_str(k)] = to_native_str(v) if is_string(v) else v
-    o.update(changes, priority=priority)
+
+    def set(self, name, value, priority='project'):
+        super(BaseSettingsWithNativeStrings, self).set(
+            to_native_str(name),
+            to_native_str(value) if is_string(value) else value,
+            priority=priority)
 
 
 def _maybe_load_autoscraping_project(o, priority=0):
@@ -44,7 +41,7 @@ def _maybe_load_autoscraping_project(o, priority=0):
                     'SLYDUPEFILTER_ENABLED': True,
                     'SLYCLOSE_SPIDER_ENABLED': True,
                     'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
-        _update_settings(o, settings, priority=priority)
+        o.update(settings, priority=priority)
         o['ITEM_PIPELINES']['slybot.dupefilter.DupeFilterPipeline'] = 0
         o["PROJECT_ZIPFILE"] = 'project-slybot.zip'
 
@@ -87,13 +84,13 @@ def _load_addons(addons, s, o, priority=0):
         path = update_classpath(addon_path)
         components[path] = addon['order']
         o[skey] = components
-        _update_settings(o, addon['default_settings'], priority)
+        o.update(addon['default_settings'], priority)
 
 
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     s = get_project_settings()
-    o = BaseSettings()
+    o = BaseSettingsWithNativeStrings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
     project_settings = apisettings.setdefault('project_settings', {})
@@ -102,13 +99,13 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(s)
-    _update_settings(o, project_settings, priority=10)
-    _update_settings(o, organization_settings, priority=20)
+    o.update(project_settings, priority=10)
+    o.update(organization_settings, priority=20)
     if spider:
-        _update_settings(o, spider_settings, priority=30)
+        o.update(spider_settings, priority=30)
         _maybe_load_autoscraping_project(o, priority=0)
         o['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
-    _update_settings(o, job_settings, priority=40)
+    o.update(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, s, o, priority=0)
     s.setdict(o.copy_to_dict(), priority='cmdline')

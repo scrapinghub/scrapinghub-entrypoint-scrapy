@@ -4,7 +4,7 @@ import sys
 import mock
 import pytest
 from scrapy.settings import BaseSettings, Settings, SettingsAttribute
-from sh_scrapy.settings import _update_settings
+from sh_scrapy.settings import BaseSettingsWithNativeStrings
 from sh_scrapy.settings import _maybe_load_autoscraping_project
 from sh_scrapy.settings import _get_component_base
 from sh_scrapy.settings import _get_action_on_missing_addons
@@ -32,40 +32,40 @@ TEST_ADDON = {
 
 
 def test_update_settings_void_dictionaries():
-    test = BaseSettings()
-    _update_settings(test, {}, 10)
+    test = BaseSettingsWithNativeStrings()
+    test.update( {}, 10)
     assert test.copy_to_dict() == {}
 
 
 def test_update_settings_base_test():
-    test = BaseSettings()
-    _update_settings(test, {'a': 'b'}, 10)
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 'b'}, 10)
     assert test == {'a': 'b'}
 
 
 def test_update_settings_base_test2():
-    test = BaseSettings()
-    _update_settings(test, {'a': 'b', 'c': 'd'}, 10)
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 'b', 'c': 'd'}, 10)
     assert test == {'a': 'b', 'c': 'd'}
 
 
 def test_update_settings_dont_fail_on_non_string():
-    test = BaseSettings()
-    _update_settings(test, {'a': 3}, 10)
+    test = BaseSettingsWithNativeStrings()
+    test.update({'a': 3}, 10)
     assert test == {'a': 3}
 
 
 def test_update_settings_update_existing_value():
-    test = BaseSettings({'a': 'b', 'c': 'd'}, priority=10)
-    _update_settings(test, {'c': 'e', 'f': 'g'}, 10)
+    test = BaseSettingsWithNativeStrings({'a': 'b', 'c': 'd'}, priority=10)
+    test.update({'c': 'e', 'f': 'g'}, 10)
     assert test.copy_to_dict() == {'a': 'b', 'c': 'e', 'f': 'g'}
 
 
 @pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
 def test_update_settings_check_unicode_in_py2_key():
     # a dict entry is duplicated as unicode doesn't match native str value
-    test = BaseSettings({})
-    _update_settings(test, {'\xf1e\xf1e\xf1e': 'test'}, 10)
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test == {'\xf1e\xf1e\xf1e': 'test',
                     to_native_str('\xf1e\xf1e\xf1e'): 'test'}
 
@@ -73,8 +73,8 @@ def test_update_settings_check_unicode_in_py2_key():
 @pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
 def test_update_settings_check_unicode_in_py2_key_value():
     # a dict entry is duplicated as unicode doesn't match native str value
-    test = BaseSettings({})
-    _update_settings(test, {'\xf1e\xf1e\xf1e': '\xf1e\xf1e'}, 10)
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': '\xf1e\xf1e'}, 10)
     assert test == {
         '\xf1e\xf1e\xf1e': '\xf1e\xf1e',
         to_native_str('\xf1e\xf1e\xf1e'): to_native_str('\xf1e\xf1e')}
@@ -82,8 +82,8 @@ def test_update_settings_check_unicode_in_py2_key_value():
 
 @pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")
 def test_update_settings_check_unicode_in_py3():
-    test = BaseSettings({})
-    _update_settings(test, {'\xf1e\xf1e\xf1e': 'test'}, 10)
+    test = BaseSettingsWithNativeStrings({})
+    test.update({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test == {'\xf1e\xf1e\xf1e': 'test'}
 
 
