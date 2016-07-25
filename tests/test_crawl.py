@@ -21,6 +21,11 @@ from sh_scrapy.crawl import main
 from sh_scrapy.log import HubstorageLogHandler
 
 
+def _get_attribute_value(attr):
+    # Compatibility helper when attribute is SettingsAttribute
+    return getattr(attr, 'value') if hasattr(attr, 'value') else attr
+
+
 @mock.patch.dict(os.environ, {'HWORKER_SENTRY_DSN': 'hw-sentry-dsn',
                               'SENTRY_DSN': 'sentry-dsn'})
 def test_init_module():
@@ -187,7 +192,7 @@ def test_run_usercode(mocked_run):
     assert mocked_run.call_args[0][0] == ['py:script.py', 'arg1']
     settings = mocked_run.call_args[0][1]
     assert isinstance(settings, Settings)
-    assert settings.get('SETTING_TEST') == 'VAL'
+    assert settings['SETTING_TEST'] == 'VAL'
 
 
 @mock.patch.dict(os.environ, {
@@ -199,7 +204,9 @@ def test_run_usercode_with_loghandler(mocked_run):
                   _get_apisettings, loghandler)
     assert mocked_run.called
     assert loghandler.setLevel.called
-    assert loghandler.setLevel.call_args[0] == (10,)
+    call_args = loghandler.setLevel.call_args[0]
+    assert len(call_args) == 1
+    assert call_args[0] == 10
 
 
 SPIDER_MSG = {
