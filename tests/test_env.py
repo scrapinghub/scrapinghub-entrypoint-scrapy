@@ -18,13 +18,14 @@ from sh_scrapy.env import _scrapy_crawl_args_and_env
 
 
 def test_make_scrapy_args():
-    # why the keys order is different ???
     assert _make_scrapy_args('-a', {}) == []
     assert _make_scrapy_args('-a', {'test': 'val'}) == ['-a', 'test=val']
     result1 = _make_scrapy_args('-s', [('k1', 'v1'), ('k2', 'v2')])
     assert result1 == ['-s', 'k1=v1', '-s', 'k2=v2']
     result2 = _make_scrapy_args('-s', [('arg1', 'val1'), ('arg2', 'val2')])
     assert result2 == ['-s', 'arg1=val1', '-s', 'arg2=val2']
+    result3 = _make_scrapy_args('-s', [('arg1', 1), ('arg2', 2)])
+    assert result3 == ['-s', 'arg1=1', '-s', 'arg2=2']
 
 
 def test_scrapy_crawl_args_and_env():

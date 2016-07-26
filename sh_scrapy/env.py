@@ -11,7 +11,7 @@ def _make_scrapy_args(arg, args_dict):
     args = []
     for k, v in sorted(dict(args_dict).items()):
         args += [arg, "{}={}".format(
-            to_native_str(k), to_native_str(v) if is_string else v)]
+            to_native_str(k), to_native_str(v) if is_string(v) else v)]
     return args
 
 
