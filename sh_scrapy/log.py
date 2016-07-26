@@ -1,4 +1,7 @@
-import sys, os, logging, warnings
+import os
+import sys
+import logging
+import warnings
 from twisted.python import log as txlog
 from scrapy import log, __version__
 from scrapy.utils.python import unicode_to_str

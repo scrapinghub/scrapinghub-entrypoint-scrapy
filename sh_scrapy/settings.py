@@ -1,5 +1,7 @@
+import os
+import sys
 import logging
-import sys, os, tempfile
+import tempfile
 from sh_scrapy.compat import to_native_str, is_string
 from scrapy.settings import Settings
 from scrapy.utils.misc import load_object
@@ -39,6 +41,13 @@ class EntrypointSettings(Settings):
             to_native_str(value) if is_string(value) else value,
             priority=priority)
 
+    def copy_to_dict(self):
+        if hasattr(super(EntrypointSettings, self), 'copy_to_dict'):
+            return super(EntrypointSettings, self).copy_to_dict()
+        # Backward compatibility with older Scrapy versions w/o copy_to_dict
+        settings = self.copy()
+        return {key: settings[key] for key in settings.attributes}
+
 
 def _maybe_load_autoscraping_project(settings, priority=0):
     if os.environ.get('SHUB_SPIDER_TYPE') in ('auto', 'portia'):
@@ -46,9 +55,9 @@ def _maybe_load_autoscraping_project(settings, priority=0):
                            'SLYDUPEFILTER_ENABLED': True,
                            'SLYCLOSE_SPIDER_ENABLED': True,
                            'SPIDER_MANAGER_CLASS': SLYBOT_SPIDER_MANAGER}
-        settings.update(slybot_settings, priority=priority)
+        settings.setdict(slybot_settings, priority=priority)
         settings['ITEM_PIPELINES'][SLYBOT_DUPE_FILTER] = 0
-        settings["PROJECT_ZIPFILE"] = 'project-slybot.zip'
+        settings.set("PROJECT_ZIPFILE", 'project-slybot.zip')
 
 
 def _get_component_base(settings, compkey):
@@ -88,8 +97,8 @@ def _load_addons(addons, settings, merged_settings, priority=0):
         components = settings[skey]
         path = update_classpath(addon_path)
         components[path] = addon['order']
-        merged_settings[skey] = components
-        merged_settings.update(addon['default_settings'], priority)
+        merged_settings.set(skey, components)
+        merged_settings.setdict(addon['default_settings'], priority)
 
 
 def _populate_settings_base(apisettings, defaults_func, spider=None):
@@ -104,13 +113,14 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     job_settings = apisettings.setdefault('job_settings', {})
 
     defaults_func(settings)
-    merged_settings.update(project_settings, priority=10)
-    merged_settings.update(organization_settings, priority=20)
+    merged_settings.setdict(project_settings, priority=10)
+    merged_settings.setdict(organization_settings, priority=20)
     if spider:
-        merged_settings.update(spider_settings, priority=30)
+        merged_settings.setdict(spider_settings, priority=30)
         _maybe_load_autoscraping_project(merged_settings, priority=0)
-        merged_settings['JOBDIR'] = tempfile.mkdtemp(prefix='jobdata-')
-    merged_settings.update(job_settings, priority=40)
+        merged_settings.set('JOBDIR', tempfile.mkdtemp(prefix='jobdata-'),
+                            priority=40)
+    merged_settings.setdict(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
     settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')

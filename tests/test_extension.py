@@ -1,10 +1,11 @@
+import sys
 import mock
 import pytest
 from weakref import WeakKeyDictionary
 from scrapy import signals
 from scrapy.http import Request, Response
 from scrapy.item import Item
-from scrapy.spiders import Spider
+from scrapy import Spider
 from scrapy.utils.test import get_crawler
 from scrapy.exceptions import NotConfigured
 from scrapy.exporters import PythonItemExporter
@@ -34,7 +35,16 @@ def test_hs_ext_init(hs_ext):
     assert hs_ext.crawler
     assert hs_ext._write_item == hs_ext.hsref.job.items.write
     assert isinstance(hs_ext.exporter, PythonItemExporter)
-    assert not hs_ext.exporter.binary
+
+
+@pytest.mark.skipif(sys.version_info > (2,), reason="requires python2")
+def test_hs_ext_binary_exporter_py2(hs_ext):
+    assert not hasattr(hs_ext.exporter, 'binary')
+
+
+@pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")
+def test_hs_ext_binary_exporter_py3(hs_ext):
+    assert not getattr(hs_ext.exporter, 'binary')
 
 
 def test_hs_ext_item_scraped(hs_ext):

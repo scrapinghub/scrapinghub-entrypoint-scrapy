@@ -57,7 +57,7 @@ def _fatalerror():
             from raven import Client
         except ImportError:
             # Do not fail here, previous error is more important
-            print('HWORKER_SENTRY_DSN is set but python-raven '\
+            print('HWORKER_SENTRY_DSN is set but python-raven '
                   'is not installed', file=_sys_stderr)
         else:
             try:
