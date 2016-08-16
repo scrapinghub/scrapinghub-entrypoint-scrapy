@@ -5,8 +5,10 @@ from scrapy.exceptions import NotConfigured
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.request import request_fingerprint
+from scrapy.exceptions import ScrapyDeprecationWarning
 from sh_scrapy import hsref
 from sh_scrapy.compat import IS_PYTHON2
+from sh_scrapy.crawl import ignore_warnings
 
 
 class HubstorageExtension(object):
@@ -21,7 +23,8 @@ class HubstorageExtension(object):
         self._write_item = self.hsref.job.items.write
         # https://github.com/scrapy/scrapy/commit/c76190d491fca9f35b6758bdc06c34d77f5d9be9
         exporter_kwargs = {'binary': False} if not IS_PYTHON2 else {}
-        self.exporter = PythonItemExporter(**exporter_kwargs)
+        with ignore_warnings(category=ScrapyDeprecationWarning):
+            self.exporter = PythonItemExporter(**exporter_kwargs)
         log.msg("HubStorage: writing items to %s" % self.hsref.job.items.url)
 
     @classmethod
