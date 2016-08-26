@@ -128,6 +128,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
 
 
 def _load_default_settings(settings):
+    return
     downloader_middlewares = {
         'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
     }
