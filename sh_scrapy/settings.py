@@ -104,6 +104,7 @@ def _load_addons(addons, settings, merged_settings, priority=0):
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     settings = get_project_settings()
+    logger.info("API settings %s" % apisettings)
     return settings
     merged_settings = EntrypointSettings()
 
