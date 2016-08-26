@@ -124,6 +124,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
     settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')
+    logging.info("Populated settings %s" % dict(settings))
     return settings
 
 
