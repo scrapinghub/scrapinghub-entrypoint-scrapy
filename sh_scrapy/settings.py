@@ -118,11 +118,12 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     defaults_func(settings)
     merged_settings.setdict(project_settings, priority=10)
     merged_settings.setdict(organization_settings, priority=20)
-    #if spider:
-    #    merged_settings.setdict(spider_settings, priority=30)
+    if spider:
+        merged_settings.setdict(spider_settings, priority=30)
     #    _maybe_load_autoscraping_project(merged_settings, priority=0)
-    #    merged_settings.set('JOBDIR', tempfile.mkdtemp(prefix='jobdata-'),
-    #                        priority=40)
+        merged_settings.set('JOBDIR', tempfile.mkdtemp(prefix='jobdata-'),
+                            priority=40)
+        print("SPIDERTYPE %s" % os.environ.get('SHUB_SPIDER_TYPE'))
     merged_settings.setdict(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
