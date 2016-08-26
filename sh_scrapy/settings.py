@@ -112,6 +112,8 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     spider_settings = apisettings.setdefault('spider_settings', {})
     job_settings = apisettings.setdefault('job_settings', {})
 
+    logging.info("api settings %s" % dict(apisettings))
+
     defaults_func(settings)
     merged_settings.setdict(project_settings, priority=10)
     merged_settings.setdict(organization_settings, priority=20)
@@ -124,12 +126,10 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
     settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')
-    logging.info("Populated settings %s" % dict(settings))
     return settings
 
 
 def _load_default_settings(settings):
-    return
     downloader_middlewares = {
         'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
     }
