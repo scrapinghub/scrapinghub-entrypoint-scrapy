@@ -104,6 +104,7 @@ def _load_addons(addons, settings, merged_settings, priority=0):
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     settings = get_project_settings()
+    return settings
     merged_settings = EntrypointSettings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
@@ -130,6 +131,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
 
 
 def _load_default_settings(settings):
+    return
     downloader_middlewares = {
         'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
     }
