@@ -147,9 +147,9 @@ def _load_default_settings(settings):
     else:
         extensions['slybot.closespider.SlybotCloseSpider'] = 0
 
-    settings.get('DOWNLOADER_MIDDLEWARES_BASE').update(downloader_middlewares)
-    settings.get('EXTENSIONS_BASE').update(extensions)
-    settings.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
+    #settings.get('DOWNLOADER_MIDDLEWARES_BASE').update(downloader_middlewares)
+    #settings.get('EXTENSIONS_BASE').update(extensions)
+    #settings.get('SPIDER_MIDDLEWARES_BASE').update(spider_middlewares)
     memory_limit = int(os.environ.get('SHUB_JOB_MEMORY_LIMIT', 950))
     settings.setdict({
         'STATS_CLASS': 'sh_scrapy.stats.HubStorageStatsCollector',
