@@ -197,7 +197,6 @@ def test_load_addons_basic_with_defaults():
     assert len(o['SPIDER_MIDDLEWARES_BASE']) == 3
 
 
-
 def test_load_addons_hworker_fail_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
