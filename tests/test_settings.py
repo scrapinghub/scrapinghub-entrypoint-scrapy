@@ -197,6 +197,7 @@ def test_load_addons_basic_with_defaults():
     assert len(o['SPIDER_MIDDLEWARES_BASE']) == 3
 
 
+
 def test_load_addons_hworker_fail_on_import():
     addons = [TEST_ADDON.copy()]
     addons[0]['path'] = 'hworker.some.module'
@@ -298,6 +299,28 @@ def test_populate_settings_with_spider_autoscraping():
     result = _populate_settings_base({}, lambda x: x, spider=True)
     assert result
     assert result['PROJECT_ZIPFILE'] == 'project-slybot.zip'
+
+
+@mock.patch('scrapy.utils.project.get_project_settings')
+def test_populate_settings_keep_user_priorities(get_settings_mock):
+    get_settings_mock.return_value = Settings({
+        'EXTENSIONS_BASE': {
+            'sh_scrapy.extension.HubstorageExtension': None,
+            'scrapy.spidermiddlewares.depth.DepthMiddleware': 10},
+        'SPIDER_MIDDLEWARES_BASE': {'scrapy.utils.misc.load_object': 1}})
+    addon = TEST_ADDON.copy()
+    api_settings = {
+        'project_settings': {
+            'EXTENSIONS_BASE': {'sh_scrapy.extension.HubstorageExtension': 300,
+                                'scrapy.contrib.throttle.AutoThrottle': 5}},
+        'enabled_addons': [addon]}
+    result = _populate_settings_base(api_settings, lambda x: x, spider=True)
+    assert result.getdict('EXTENSIONS_BASE')[
+        'sh_scrapy.extension.HubstorageExtension'] is None
+    assert result.getdict('EXTENSIONS_BASE')[
+        'scrapy.contrib.throttle.AutoThrottle'] == 5
+    assert result.getdict('SPIDER_MIDDLEWARES_BASE')[
+        'scrapy.utils.misc.load_object'] == 1
 
 
 def test_load_default_settings():

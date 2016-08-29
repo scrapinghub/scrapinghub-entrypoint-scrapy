@@ -5,7 +5,6 @@ import tempfile
 from sh_scrapy.compat import to_native_str, is_string
 from scrapy.settings import Settings
 from scrapy.utils.misc import load_object
-from scrapy.utils.project import get_project_settings
 
 
 logger = logging.getLogger(__name__)
@@ -96,13 +95,25 @@ def _load_addons(addons, settings, merged_settings, priority=0):
         skey = _get_component_base(settings, addon['type'])
         components = settings[skey]
         path = update_classpath(addon_path)
-        components[path] = addon['order']
+        if path not in components:
+            components[path] = addon['order']
         merged_settings.set(skey, components)
         merged_settings.setdict(addon['default_settings'], priority)
 
 
+def _merge_with_keeping_order(settings, updates):
+    for setting, value in updates.items():
+        if not isinstance(value, dict):
+            settings.set(setting, value, priority='cmdline')
+            continue
+        for path, order in value.items():
+            if path not in settings[setting]:
+                settings[setting][path] = order
+
+
 def _populate_settings_base(apisettings, defaults_func, spider=None):
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
+    from scrapy.utils.project import get_project_settings
     settings = get_project_settings()
     merged_settings = EntrypointSettings()
 
@@ -123,7 +134,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     merged_settings.setdict(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
-    settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')
+    _merge_with_keeping_order(settings, merged_settings.copy_to_dict())
     return settings
 
 
