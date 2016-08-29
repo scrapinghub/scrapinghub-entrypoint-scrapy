@@ -300,6 +300,45 @@ def test_populate_settings_with_spider_autoscraping():
     assert result['PROJECT_ZIPFILE'] == 'project-slybot.zip'
 
 
+@mock.patch('sh_scrapy.settings.get_project_settings')
+def test_populate_settings_keep_user_priorities(get_settings_mock):
+    get_settings_mock.return_value = Settings({
+        'EXTENSIONS_BASE': {
+            'sh_scrapy.extension.HubstorageExtension': None,
+            'scrapy.spidermiddlewares.depth.DepthMiddleware': 10},
+        'SPIDER_MIDDLEWARES_BASE': {'scrapy.utils.misc.load_object': 1}})
+    addon = TEST_ADDON.copy()
+    api_settings = {
+        'project_settings': {
+            'EXTENSIONS_BASE': {'sh_scrapy.extension.HubstorageExtension': 300,
+                                'scrapy.contrib.throttle.AutoThrottle': 5}},
+        'enabled_addons': [addon]}
+    result = _populate_settings_base(api_settings, lambda x: x, spider=True)
+    assert result.getdict('EXTENSIONS_BASE')[
+        'sh_scrapy.extension.HubstorageExtension'] is None
+    assert result.getdict('EXTENSIONS_BASE').get(
+        'scrapy.contrib.throttle.AutoThrottle') is None
+    assert result.getdict('EXTENSIONS_BASE')[
+        'scrapy.extensions.throttle.AutoThrottle'] == 5
+    assert result.getdict('SPIDER_MIDDLEWARES_BASE')[
+        'scrapy.utils.misc.load_object'] == 1
+
+
+@mock.patch('sh_scrapy.settings.get_project_settings')
+def test_populate_settings_keep_user_priorities_oldpath(get_settings_mock):
+    get_settings_mock.return_value = Settings({
+        'EXTENSIONS_BASE': {'scrapy.contrib.throttle.AutoThrottle': 0}})
+    api_settings = {
+        'project_settings': {
+            'EXTENSIONS_BASE': {'scrapy.contrib.throttle.AutoThrottle': 5}}}
+    result = _populate_settings_base(api_settings, lambda x: x, spider=True)
+    autothrottles = [k for k in result.getdict('EXTENSIONS_BASE')
+                     if 'AutoThrottle' in k]
+    assert len(autothrottles) == 1
+    assert result.getdict('EXTENSIONS_BASE')[
+        'scrapy.extensions.throttle.AutoThrottle'] is 0
+
+
 def test_load_default_settings():
     result = Settings({'EXTENSIONS_BASE': {
         'sh_scrapy.extension.HubstorageExtension': 50},
