@@ -76,6 +76,31 @@ def _get_action_on_missing_addons(settings):
     return on_missing_addons
 
 
+def _update_old_classpaths(settings):
+    """Update user's project settings with proper class paths"""
+    for setting_key in settings.attributes.keys():
+        setting_value = settings[setting_key]
+        # A workaround to make it work for:
+        # - Scrapy==1.0.5 with dicts as values
+        # - Scrapy>=1.1.0 with BaseSettings as values
+        if hasattr(setting_value, 'copy_to_dict'):
+            setting_value = setting_value.copy_to_dict()
+        elif not isinstance(setting_value, dict):
+            continue
+        for path in setting_value.keys():
+            updated_path = update_classpath(path)
+            if updated_path != path:
+                order = settings[setting_key].pop(path)
+                settings[setting_key][updated_path] = order
+
+
+def _update_component_order(components, path, order):
+    """Update component order only if it's not set yet"""
+    updated_path = update_classpath(path)
+    if updated_path not in components:
+        components[updated_path] = order
+
+
 def _load_addons(addons, settings, merged_settings, priority=0):
     on_missing_addons = _get_action_on_missing_addons(merged_settings)
     for addon in addons:
@@ -95,15 +120,30 @@ def _load_addons(addons, settings, merged_settings, priority=0):
             raise
         skey = _get_component_base(settings, addon['type'])
         components = settings[skey]
-        path = update_classpath(addon_path)
-        components[path] = addon['order']
+        _update_component_order(components, addon_path, addon['order'])
         merged_settings.set(skey, components)
         merged_settings.setdict(addon['default_settings'], priority)
 
 
+def _merge_with_keeping_order(settings, updates):
+    for setting_key, value in updates.items():
+        if not isinstance(value, dict):
+            settings.set(setting_key, value, priority='cmdline')
+            continue
+        components = settings[setting_key]
+        for path, order in value.items():
+            _update_component_order(components, path, order)
+
+
 def _populate_settings_base(apisettings, defaults_func, spider=None):
+    """Populate and merge project settings with other ones.
+
+    Important note: Scrapy doesn't really copy values on set/setdict methods,
+    changing a dict in merged settings means mutating it in original settings.
+    """
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
     settings = get_project_settings()
+    _update_old_classpaths(settings)
     merged_settings = EntrypointSettings()
 
     enabled_addons = apisettings.setdefault('enabled_addons', [])
@@ -123,7 +163,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     merged_settings.setdict(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
-    settings.setdict(merged_settings.copy_to_dict(), priority='cmdline')
+    _merge_with_keeping_order(settings, merged_settings.copy_to_dict())
     return settings
 
 
