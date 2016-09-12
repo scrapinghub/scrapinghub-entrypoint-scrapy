@@ -115,26 +115,26 @@ def test_get_apisettings_from_env():
 
 @mock.patch('sh_scrapy.crawl._run_pkgscript')
 def test_run_pkg_script(run_pkg_mock):
-    _run(['spider'], {'SETTING': 'VALUE'})
+    _run(['py:script.py'], {'SETTING': 'VALUE'})
     assert run_pkg_mock.called
-    assert run_pkg_mock.call_args[0] == (['spider'],)
+    assert run_pkg_mock.call_args[0] == (['py:script.py'],)
 
 
-@mock.patch.dict(os.environ, {'SCRAPY_PROJECT_ID': '123'})
 @mock.patch('sh_scrapy.crawl._run_scrapy')
 def test_run_scrapy_spider(run_scrapy_mock):
-    _run(['spider'], {'SETTING': 'VALUE'})
+    _run(['scrapy', 'crawl', 'spider'], {'SETTING': 'VALUE'})
     assert run_scrapy_mock.called
-    assert run_scrapy_mock.call_args[0] == (['spider'], {'SETTING': 'VALUE'})
+    assert run_scrapy_mock.call_args[0] == (
+        ['scrapy', 'crawl', 'spider'], {'SETTING': 'VALUE'})
 
 
 @mock.patch('scrapy.cmdline.execute')
 def test_run_scrapy(execute_mock):
-    _run_scrapy(['spider'], {'SETTING': 'VALUE'})
+    _run_scrapy(['scrapy', 'crawl', 'spider'], {'SETTING': 'VALUE'})
     assert execute_mock.called
     assert execute_mock.call_args == (
         {'settings': {'SETTING': 'VALUE'}},)
-    assert sys.argv == ['spider']
+    assert sys.argv == ['scrapy', 'crawl', 'spider']
 
 
 def get_working_set(working_set_class):

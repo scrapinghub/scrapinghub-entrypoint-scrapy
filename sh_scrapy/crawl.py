@@ -85,8 +85,7 @@ def _get_apisettings():
 
 
 def _run(args, settings):
-    # SCRAPY_PROJECT_ID is set in both scrapy jobs and scrapy list (deploys)
-    if 'SCRAPY_PROJECT_ID' in os.environ:
+    if args[0] == 'scrapy':
         _run_scrapy(args, settings)
     else:
         _run_pkgscript(args)
