@@ -9,7 +9,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'Scrapy>=1.0',
-        'hubstorage>=0.22',
+        'hubstorage>=0.23.2',
     ],
     entry_points={
         'console_scripts': [

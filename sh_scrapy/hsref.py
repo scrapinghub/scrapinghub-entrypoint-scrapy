@@ -46,8 +46,10 @@ class _HubstorageRef(object):
     def client(self):
         from hubstorage.client import HubstorageClient
         if self._client is None:
+            user_agent = os.environ.get('SHUB_HS_USER_AGENT')
             self._client = HubstorageClient(endpoint=self.endpoint,
-                                            auth=self.auth)
+                                            auth=self.auth,
+                                            user_agent=user_agent)
         return self._client
 
     @property
