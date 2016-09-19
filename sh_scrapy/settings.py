@@ -130,6 +130,7 @@ def _merge_with_keeping_order(settings, updates):
         if not isinstance(value, dict):
             settings.set(setting_key, value, priority='cmdline')
             continue
+        logging.exception('Updating %s' % setting_key)
         components = settings[setting_key]
         for path, order in value.items():
             _update_component_order(components, path, order)
@@ -163,6 +164,8 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     merged_settings.setdict(job_settings, priority=40)
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
+    logging.exception("Merging %s with %s" % (settings.attributes,
+                                              merged_settings.copy_to_dict()))
     _merge_with_keeping_order(settings, merged_settings.copy_to_dict())
     return settings
 
