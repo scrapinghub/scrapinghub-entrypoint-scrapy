@@ -324,6 +324,13 @@ def test_populate_settings_keep_user_priorities(get_settings_mock):
         'scrapy.utils.misc.load_object'] == 1
 
 
+def test_populate_settings_unique_update_dict():
+    monitoring_dict = {u'SPIDER_OPENED': {u'failed_actions': []}}
+    msg = {'spider_settings': {'DASH_MONITORING': monitoring_dict}}
+    result = _populate_settings_base(msg, lambda x: x, spider=True)
+    assert result['DASH_MONITORING'] == monitoring_dict
+
+
 @mock.patch('sh_scrapy.settings.get_project_settings')
 def test_populate_settings_keep_user_priorities_oldpath(get_settings_mock):
     get_settings_mock.return_value = Settings({

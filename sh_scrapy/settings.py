@@ -17,6 +17,13 @@ REPLACE_ADDONS_PATHS = {
 }
 SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
 SLYBOT_DUPE_FILTER = 'slybot.dupefilter.DupeFilterPipeline'
+SETTINGS_ORDERED_DICTS = [
+    "DOWNLOADER_MIDDLEWARES", "DOWNLOADER_MIDDLEWARES_BASE",
+    "EXTENSIONS", "EXTENSIONS_BASE",
+    "ITEM_PIPELINES", "ITEM_PIPELINES_BASE",
+    "SPIDER_CONTRACTS", "SPIDER_CONTRACTS_BASE",
+    "SPIDER_MIDDLEWARES", "SPIDER_MIDDLEWARES_BASE"
+]
 
 try:
     from scrapy.utils.deprecate import update_classpath
@@ -130,9 +137,12 @@ def _merge_with_keeping_order(settings, updates):
         if not isinstance(value, dict):
             settings.set(setting_key, value, priority='cmdline')
             continue
-        components = settings[setting_key]
-        for path, order in value.items():
-            _update_component_order(components, path, order)
+        if setting_key in SETTINGS_ORDERED_DICTS:
+            components = settings[setting_key]
+            for path, order in value.items():
+                _update_component_order(components, path, order)
+        else:
+            settings.set(setting_key, value)
 
 
 def _populate_settings_base(apisettings, defaults_func, spider=None):
