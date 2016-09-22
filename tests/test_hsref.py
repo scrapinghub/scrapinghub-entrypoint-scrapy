@@ -67,7 +67,21 @@ def test_client(hsref, hsc_class):
     assert not hsref._client
     assert hsref.client == hsc_class.return_value
     hsc_class.assert_called_with(endpoint='storage-url',
-                                 auth='1/2/3:authstr')
+                                 auth='1/2/3:authstr',
+                                 user_agent=None)
+    assert hsref._client
+    assert hsref.client == hsref._client
+
+
+@mock.patch.dict(os.environ, {'SHUB_JOBAUTH': TEST_AUTH,
+                              'SHUB_STORAGE': 'storage-url',
+                              'SHUB_HS_USER_AGENT': 'testUA'})
+def test_client_custom_ua(hsref, hsc_class):
+    assert not hsref._client
+    assert hsref.client == hsc_class.return_value
+    hsc_class.assert_called_with(endpoint='storage-url',
+                                 auth='1/2/3:authstr',
+                                 user_agent='testUA')
     assert hsref._client
     assert hsref.client == hsref._client
 
