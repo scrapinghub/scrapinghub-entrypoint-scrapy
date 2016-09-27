@@ -120,6 +120,15 @@ def test_run_pkg_script(run_pkg_mock):
     assert run_pkg_mock.call_args[0] == (['py:script.py'],)
 
 
+@mock.patch('pkg_resources.WorkingSet')
+def test_run_pkg_script_distribution_not_found(working_set_class):
+    fake_set = mock.Mock()
+    fake_set.iter_entry_points.return_value = iter(())
+    working_set_class.return_value = fake_set
+    with pytest.raises(ValueError):
+        _run(['py:script.py'], {'SETTING': 'VALUE'})
+
+
 @mock.patch('sh_scrapy.crawl._run_scrapy')
 def test_run_scrapy_spider(run_scrapy_mock):
     _run(['scrapy', 'crawl', 'spider'], {'SETTING': 'VALUE'})
