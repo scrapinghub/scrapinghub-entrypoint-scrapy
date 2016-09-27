@@ -27,6 +27,20 @@ _sentry_dsn = os.environ.pop('SENTRY_DSN', _hworker_sentry_dsn)
 socket.setdefaulttimeout(60.0)
 
 
+SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND = """
+Scrapy distribution with `scrapy.settings` entrypoint is not found.
+The entrypoint should be specified in your project setup.py, please make sure
+you specified it in the following format:
+setup(
+    ...,
+    entry_points = {'scrapy': ['settings = your_project.settings']},
+    ...
+)
+Check the link for more details:
+https://setuptools.readthedocs.io/en/latest/pkg_resources.html#entry-points
+"""
+
+
 @contextmanager
 def ignore_warnings(**kwargs):
     """Context manager that creates a temporary filter to ignore warnings.
@@ -109,6 +123,8 @@ def _run_pkgscript(argv):
             if ep.name == 'settings':
                 return ep.dist
     d = get_distribution()
+    if not d:
+        raise ValueError(SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND)
     d.run_script(scriptname, {'__name__': '__main__'})
 
 
