@@ -56,6 +56,14 @@ def test_hs_ext_item_scraped(hs_ext):
     assert hs_ext._write_item.call_args[0] == ({'_type': 'Item'},)
 
 
+def test_hs_ext_item_scraped_skip_wrong_type(hs_ext):
+    hs_ext._write_item = mock.Mock()
+    spider = Spider('test')
+    for item in [None, [], 123]:
+        hs_ext.item_scraped(item, spider)
+        assert hs_ext._write_item.call_count == 0
+
+
 def test_hs_ext_spider_closed(hs_ext):
     spider = Spider('test')
     hs_ext.spider_closed(spider, 'killed')
