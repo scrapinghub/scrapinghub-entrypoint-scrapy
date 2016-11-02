@@ -1,5 +1,7 @@
 import time
+import logging
 from weakref import WeakKeyDictionary
+from scrapy import Item
 from scrapy import signals, log
 from scrapy.exceptions import NotConfigured
 from scrapy.exporters import PythonItemExporter
@@ -35,6 +37,9 @@ class HubstorageExtension(object):
         return o
 
     def item_scraped(self, item, spider):
+        if not isinstance(item, (dict, Item)):
+            log.msg("Wrong item type: %s" % item, level=logging.ERROR)
+            return
         type_ = type(item).__name__
         item = self.exporter.export_item(item)
         item.setdefault("_type", type_)
