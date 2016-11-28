@@ -84,7 +84,12 @@ def _get_action_on_missing_addons(settings):
 
 
 def _update_old_classpaths(settings):
-    """Update user's project settings with proper class paths"""
+    """Update user's project settings with proper class paths.
+
+    Note that the method updates only settings with dicts as values:
+    it's needed for proper dicts merge to avoid duplicates in paths.
+    For all other cases Scrapy will handle it by itself.
+    """
     for setting_key in settings.attributes.keys():
         setting_value = settings[setting_key]
         # A workaround to make it work for:
@@ -95,6 +100,8 @@ def _update_old_classpaths(settings):
         elif not isinstance(setting_value, dict):
             continue
         for path in setting_value.keys():
+            if not is_string(path):
+                continue
             updated_path = update_classpath(path)
             if updated_path != path:
                 order = settings[setting_key].pop(path)

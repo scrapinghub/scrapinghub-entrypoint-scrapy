@@ -12,6 +12,7 @@ from sh_scrapy.settings import _get_action_on_missing_addons
 from sh_scrapy.settings import _load_addons
 from sh_scrapy.settings import _populate_settings_base
 from sh_scrapy.settings import _load_default_settings
+from sh_scrapy.settings import _update_old_classpaths
 from sh_scrapy.settings import populate_settings
 from sh_scrapy.settings import REPLACE_ADDONS_PATHS
 
@@ -380,3 +381,19 @@ def test_populate_settings_dont_fail_with_spider():
     assert isinstance(result, Settings)
     # check one of the settings provided by default by sh_scrapy
     assert result['TELNETCONSOLE_HOST'] == '0.0.0.0'
+
+
+def test_update_old_classpaths_not_string():
+
+    class CustomObject(object):
+        pass
+
+    test_value = {'scrapy.contrib.exporter.CustomExporter': 1,
+                  123: 2, CustomObject: 3}
+    test_settings = Settings({'SOME_SETTING': test_value})
+    _update_old_classpaths(test_settings)
+    expected = test_settings['SOME_SETTING'].keys()
+    assert len(expected) == 3
+    assert 123 in expected
+    assert CustomObject in expected
+    assert 'scrapy.exporters.CustomExporter' in expected
