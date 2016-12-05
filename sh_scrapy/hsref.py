@@ -44,7 +44,7 @@ class _HubstorageRef(object):
 
     @property
     def client(self):
-        from hubstorage.client import HubstorageClient
+        from scrapinghub import HubstorageClient
         if self._client is None:
             user_agent = os.environ.get('SHUB_HS_USER_AGENT')
             self._client = HubstorageClient(endpoint=self.endpoint,

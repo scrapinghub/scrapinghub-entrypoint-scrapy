@@ -30,7 +30,7 @@ def hsref():
 @pytest.fixture
 def hsc_class(monkeypatch):
     hsc_class = mock.Mock()
-    monkeypatch.setattr('hubstorage.client.HubstorageClient', hsc_class)
+    monkeypatch.setattr('scrapinghub.HubstorageClient', hsc_class)
     return hsc_class
 
 
