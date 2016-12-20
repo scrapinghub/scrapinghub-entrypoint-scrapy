@@ -144,7 +144,7 @@ def _run_usercode(spider, args, apisettings_func, log_handler=None):
     try:
         _run(args, settings)
     except Exception:
-        logging.exception('Script initialization failed')
+        logging.exception('Job runtime exception')
         raise
 
 
