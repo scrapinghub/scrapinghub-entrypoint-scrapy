@@ -1,28 +1,28 @@
+import logging
 import os
 import sys
-import logging
 import warnings
+
 from twisted.python import log as txlog
 from scrapy import log, __version__
-from scrapy.utils.python import unicode_to_str
-from sh_scrapy import hsref
+
 from sh_scrapy.compat import to_native_str
+from sh_scrapy.writer import pipe_writer
 
 
 # keep a global reference to stderr as it is redirected on log initialization
+_stdout = sys.stdout
 _stderr = sys.stderr
 
 
-def _logfn(*args, **kwargs):
-    """Wraps HS job logging function
-
-    Prevents errors writing to a closed batchuploader writer
-    It happens when the log writer is closed but batchuploader is still sending batches
-    """
-    logs = hsref.hsref.job.logs
-    w = logs._writer
-    if not (w and w.closed):
-        logs.log(*args, **kwargs)
+def _logfn(level, message):
+    """Wraps HS job logging function."""
+    try:
+        pipe_writer.write_log(level=level, message=message)
+    except UnicodeDecodeError:
+        # workaround for messages that contain binary data
+        message = repr(message)[1:-1]
+        pipe_writer.write_log(level=level, message=message)
 
 
 def initialize_logging():
@@ -85,8 +85,9 @@ class HubstorageLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            msg = self.format(record)
-            _logfn(msg, level=record.levelno)
+            message = self.format(record)
+            if message:
+                _logfn(message=message, level=record.levelno)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
@@ -96,7 +97,7 @@ class HubstorageLogHandler(logging.Handler):
         cur = sys.stderr
         try:
             sys.stderr = _stderr
-            logging.Handler.handleError(self, record)
+            super(HubstorageLogHandler, self).handleError(record)
         finally:
             sys.stderr = cur
 

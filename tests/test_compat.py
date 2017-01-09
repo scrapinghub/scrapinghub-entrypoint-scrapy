@@ -1,7 +1,5 @@
-import sys
 import pytest
 from sh_scrapy.compat import to_bytes
-from sh_scrapy.compat import to_native_str
 from sh_scrapy.compat import to_unicode
 
 # Testing to_unicode conversion

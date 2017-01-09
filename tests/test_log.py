@@ -1,26 +1,22 @@
-import os
-import sys
+import json
+import logging
 import mock
 import pytest
-import logging
+import sys
+import zlib
 
 import scrapy.log
-from sh_scrapy.log import _logfn, _dummy
+from sh_scrapy.log import _dummy, _stdout, _stderr
 from sh_scrapy.log import initialize_logging
 from sh_scrapy.log import HubstorageLogHandler
 from sh_scrapy.log import HubstorageLogObserver
 from sh_scrapy.log import StdoutLogger
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_logfn_writer_opened(hsref):
-    args = ('test', 'logging')
-    kwargs = {'x': 'parX', 'y': 'parY'}
-    hsref.job.logs._writer.closed = False
-    _logfn(*args, **kwargs)
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args[0] == args
-    assert hsref.job.logs.log.call_args[1] == kwargs
+@pytest.fixture(autouse=True)
+def reset_std_streams():
+    sys.stdout = _stdout
+    sys.stderr = _stderr
 
 
 @mock.patch('twisted.python.log.startLoggingWithObserver')
@@ -46,11 +42,10 @@ def test_initialize_logging_dont_fail(observer, txlog_start):
 
     # check twisted specific
     assert observer.called
-    assert observer.call_args[0] == (loghandler,)
+    observer.assert_called_with(loghandler)
     emit_method = observer.return_value.emit
     assert txlog_start.called
-    assert txlog_start.call_args[0] == (emit_method,)
-    assert txlog_start.call_args[1] == {'setStdout': False}
+    txlog_start.assert_called_with(emit_method, setStdout=False)
 
     # check returned handler
     assert isinstance(loghandler, HubstorageLogHandler)
@@ -58,32 +53,27 @@ def test_initialize_logging_dont_fail(observer, txlog_start):
     assert loghandler.formatter._fmt == '[%(name)s] %(message)s'
 
 
-@mock.patch.dict(os.environ, {'SCRAPY_JOB': '1/2/3'})
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_initialize_logging_test_scrapy_specific(hsref):
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_initialize_logging_test_scrapy_specific(pipe_writer):
     """Make sure we reset scrapy.log.start"""
     loghandler = initialize_logging()
     assert scrapy.log.start == _dummy
+    # test it doesn't fail
+    scrapy.log.start()
 
 
-def test_dummy_doesnt_fail():
-    _dummy()
-
-
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_loghandler_emit_ok(hsref):
-    hsref.job.logs._writer.closed = False
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_hs_loghandler_emit_ok(pipe_writer):
     hdlr = HubstorageLogHandler()
     record = logging.makeLogRecord({'msg': 'test-record'})
     hdlr.emit(record)
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args[0] == ('test-record',)
+    assert pipe_writer.write_log.called
+    pipe_writer.write_log.assert_called_with(message='test-record', level=None)
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_loghandler_emit_handle_interrupt(hsref):
-    hsref.job.logs._writer.closed = False
-    hsref.job.logs.log.side_effect = KeyboardInterrupt
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_hs_loghandler_emit_handle_interrupt(pipe_writer):
+    pipe_writer.write_log.side_effect = KeyboardInterrupt
     hdlr = HubstorageLogHandler()
     record = logging.makeLogRecord({'msg': 'test-record'})
     with pytest.raises(KeyboardInterrupt):
@@ -91,15 +81,14 @@ def test_hs_loghandler_emit_handle_interrupt(hsref):
 
 
 @mock.patch('logging.Handler.handleError')
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_loghandler_emit_handle_exception(hsref, handleError):
-    hsref.job.logs._writer.closed = False
-    hsref.job.logs.log.side_effect = ValueError
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_hs_loghandler_emit_handle_exception(pipe_writer, handleError):
+    pipe_writer.write_log.side_effect = ValueError
     hdlr = HubstorageLogHandler()
     record = logging.makeLogRecord({'msg': 'test-record'})
     hdlr.emit(record)
     assert handleError.called
-    assert handleError.call_args[0] == (hdlr, record)
+    assert handleError.call_args == mock.call(record)
 
 
 @pytest.fixture
@@ -173,23 +162,21 @@ def test_hs_logobserver_get_log_item_format_error(hs_observer):
         'level': 40, 'message': expected_template % (event['format'], event)}
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_logobserver_emit_filter_events(hsref, hs_observer):
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_hs_logobserver_emit_filter_events(pipe_writer, hs_observer):
     hs_observer._hs_loghdlr.level = 20
     event = {'system': 'scrapy', 'logLevel': 10}
     hs_observer.emit(event)
-    assert not hsref.job.logs.log.called
+    assert not pipe_writer.write_log.called
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_logobserver_emit_logitem(hsref, hs_observer):
-    hsref.job.logs._writer.closed = False
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_hs_logobserver_emit_logitem(pipe_writer, hs_observer):
     hs_observer._hs_loghdlr.level = 20
     event = {'system': 'other', 'message': ['test'], 'isError': False}
     hs_observer.emit(event)
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args[0] == ()
-    assert hsref.job.logs.log.call_args[1] == {'level': 20, 'message': 'test'}
+    assert pipe_writer.write_log.called
+    pipe_writer.write_log.assert_called_with(level=20, message='test')
 
 
 def stdout_logger_init_stdout():
@@ -204,26 +191,27 @@ def stdout_logger_init_stderr():
     assert logger_out.loglevel == logging.ERROR
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_stdout_logger_logprefixed(hsref):
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_stdout_logger_logprefixed(pipe_writer):
     logger = StdoutLogger(0, 'utf-8')
-    hsref.job.logs._writer.closed = False
     logger._logprefixed('message')
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args[0] == ()
-    assert hsref.job.logs.log.call_args[1] == {
-        'level': 20, 'message': '[stdout] message'}
+    assert pipe_writer.write_log.called
+    pipe_writer.write_log.assert_called_with(level=20, message='[stdout] message')
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_stdout_logger_write(hsref):
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_stdout_logger_write(pipe_writer):
     logger = StdoutLogger(0, 'utf-8')
-    hsref.job.logs._writer.closed = False
     logger.write('some-string\nother-string\nlast-string')
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args_list == [
-        ({'level': 20, 'message': '[stdout] some-string'},),
-        ({'level': 20, 'message': '[stdout] other-string'},)]
+    assert pipe_writer.write_log.called
+    assert pipe_writer.write_log.call_args_list[0] == mock.call(
+        level=20,
+        message='[stdout] some-string'
+    )
+    assert pipe_writer.write_log.call_args_list[1] == mock.call(
+        level=20,
+        message='[stdout] other-string'
+    )
     assert logger.buf == 'last-string'
 
 
@@ -232,12 +220,25 @@ def test_stdout_logger_writelines_empty():
     logger.writelines([])
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_stdout_logger_writelines(hsref):
+@mock.patch('sh_scrapy.log.pipe_writer')
+def test_stdout_logger_writelines(pipe_writer):
     logger = StdoutLogger(0, 'utf-8')
-    hsref.job.logs._writer.closed = False
     logger.writelines(['test-line'])
-    assert hsref.job.logs.log.called
-    assert hsref.job.logs.log.call_args[0] == ()
-    assert hsref.job.logs.log.call_args[1] == {
-        'level': 20, 'message': '[stdout] test-line'}
+    assert pipe_writer.write_log.called
+    pipe_writer.write_log.assert_called_with(level=20, message='[stdout] test-line')
+
+
+@pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
+@mock.patch('sh_scrapy.log.pipe_writer._pipe')
+def test_unicode_decode_error_handling(pipe_mock):
+    hdlr = HubstorageLogHandler()
+    message = 'value=%s' % zlib.compress('value')
+    record = logging.makeLogRecord({'msg': message, 'levelno': 10})
+    hdlr.emit(record)
+    assert pipe_mock.write.called
+    payload = json.loads(pipe_mock.write.call_args_list[2][0][0])
+    assert isinstance(payload.pop('time'), int)
+    assert payload == {
+        'message': r'value=x\x9c+K\xcc)M\x05\x00\x06j\x02\x1e',
+        'level': 10
+    }

@@ -161,7 +161,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     changing a dict in merged settings means mutating it in original settings.
     """
     assert 'scrapy.conf' not in sys.modules, "Scrapy settings already loaded"
-    settings = get_project_settings()
+    settings = get_project_settings().copy()
     _update_old_classpaths(settings)
     merged_settings = EntrypointSettings()
 

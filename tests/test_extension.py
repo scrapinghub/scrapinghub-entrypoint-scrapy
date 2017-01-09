@@ -2,12 +2,10 @@ import sys
 import mock
 import pytest
 from weakref import WeakKeyDictionary
-from scrapy import signals
 from scrapy.http import Request, Response
 from scrapy.item import Item
 from scrapy import Spider
 from scrapy.utils.test import get_crawler
-from scrapy.exceptions import NotConfigured
 from scrapy.exporters import PythonItemExporter
 from scrapy.utils.request import request_fingerprint
 
@@ -15,25 +13,17 @@ from sh_scrapy.extension import HubstorageExtension
 from sh_scrapy.extension import HubstorageMiddleware
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
-def test_hs_ext_fail_if_disabled_hsref(hsref):
-    hsref.enabled = False
-    crawler = get_crawler(Spider)
-    with pytest.raises(NotConfigured):
-        return HubstorageExtension.from_crawler(crawler)
-
-
 @pytest.fixture
-@mock.patch('sh_scrapy.hsref.hsref')
-def hs_ext(hsref):
-    hsref.enabled = True
+def hs_ext(monkeypatch):
+    monkeypatch.setattr('sh_scrapy.extension.pipe_writer', mock.Mock())
+    monkeypatch.setattr('sh_scrapy.extension.hsref', mock.Mock())
     crawler = get_crawler(Spider)
     return HubstorageExtension.from_crawler(crawler)
 
 
 def test_hs_ext_init(hs_ext):
     assert hs_ext.crawler
-    assert hs_ext._write_item == hs_ext.hsref.job.items.write
+    assert hs_ext._write_item == hs_ext.pipe_writer.write_item
     assert isinstance(hs_ext.exporter, PythonItemExporter)
 
 
@@ -67,16 +57,13 @@ def test_hs_ext_item_scraped_skip_wrong_type(hs_ext):
 def test_hs_ext_spider_closed(hs_ext):
     spider = Spider('test')
     hs_ext.spider_closed(spider, 'killed')
-    assert hs_ext.hsref.job.items.flush.called
-    assert hs_ext.hsref.job.metadata.update.called
-    assert hs_ext.hsref.job.metadata.update.call_args == (
-        {'close_reason': 'killed'},)
-    assert hs_ext.hsref.job.metadata.save.called
+    assert hs_ext.pipe_writer.set_outcome.called
+    assert hs_ext.pipe_writer.set_outcome.call_args == mock.call('killed')
 
 
 @pytest.fixture
-@mock.patch('sh_scrapy.hsref.hsref')
-def hs_mware(hsref):
+def hs_mware(monkeypatch):
+    monkeypatch.setattr('sh_scrapy.extension.pipe_writer', mock.Mock())
     return HubstorageMiddleware()
 
 
@@ -88,12 +75,9 @@ def test_hs_mware_init(hs_mware):
 def test_hs_mware_process_spider_input(hs_mware):
     response = Response('http://resp-url')
     response.request = Request('http://req-url')
-    hs_mware.hsref.job.requests.add.return_value = 'riq'
     hs_mware.process_spider_input(response, Spider('test'))
-    assert hs_mware.hsref.job.requests.add.call_count == 1
-    args = hs_mware.hsref.job.requests.add.call_args[1]
-    ts = args.pop('ts', None)
-    assert isinstance(ts, float)
+    assert hs_mware.pipe_writer.write_request.call_count == 1
+    args = hs_mware.pipe_writer.write_request.call_args[1]
     assert args == {
         'duration': 0,
         'fp': request_fingerprint(response.request),
@@ -101,8 +85,9 @@ def test_hs_mware_process_spider_input(hs_mware):
         'parent': None,
         'rs': 0,
         'status': 200,
-        'url': 'http://resp-url'}
-    assert hs_mware._seen == WeakKeyDictionary({response: 'riq'})
+        'url': 'http://resp-url'
+    }
+    assert hs_mware._seen == WeakKeyDictionary({response: 0})
 
 
 def test_hs_mware_process_spider_output_void_result(hs_mware):

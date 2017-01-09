@@ -14,7 +14,6 @@ from sh_scrapy.settings import _populate_settings_base
 from sh_scrapy.settings import _load_default_settings
 from sh_scrapy.settings import _update_old_classpaths
 from sh_scrapy.settings import populate_settings
-from sh_scrapy.settings import REPLACE_ADDONS_PATHS
 
 from sh_scrapy.compat import to_native_str
 

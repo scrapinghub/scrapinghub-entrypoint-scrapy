@@ -274,22 +274,22 @@ def test_list_spiders_handle_fatalerror(mocked_setup, mocked_fatalerr):
     assert mocked_fatalerr.called
 
 
-@mock.patch('sh_scrapy.hsref.hsref')
+@mock.patch('sh_scrapy.writer.pipe_writer')
 @mock.patch('sh_scrapy.crawl._launch')
-def test_main(mocked_launch, hsref):
+def test_main(mocked_launch, pipe_writer):
     main()
     assert mocked_launch.called
     assert mocked_launch.call_args == ()
     assert sys.stdout == sh_scrapy.crawl._sys_stdout
     assert sys.stderr == sh_scrapy.crawl._sys_stderr
-    assert hsref.close.called
+    assert pipe_writer.close.called
 
 
 @mock.patch('sh_scrapy.crawl._fatalerror')
-@mock.patch('sh_scrapy.hsref.hsref')
+@mock.patch('sh_scrapy.writer.pipe_writer')
 @mock.patch('sh_scrapy.crawl._launch')
-def test_main_dont_fail_if_not_hsref(mocked_launch, hsref, mocked_fatalerr):
-    hsref.close.side_effect = IOError('connection error')
+def test_main_log_fatal_error_if_pipe_close_fails(mocked_launch, pipe_writer, mocked_fatalerr):
+    pipe_writer.close.side_effect = IOError('some error while closing pipe')
     main()
     assert mocked_launch.called
     assert mocked_launch.call_args == ()
