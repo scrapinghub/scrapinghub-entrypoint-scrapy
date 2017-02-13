@@ -14,6 +14,8 @@ REPLACE_ADDONS_PATHS = {
         "scrapy_pagestorage.PageStorageMiddleware",
     "hworker.bot.ext.persistence.DotScrapyPersistence":
         "scrapy_dotpersistence.DotScrapyPersistence",
+    "scrapylib.deltafetch.DeltaFetch":
+        "scrapy_deltafetch.middleware.DeltaFetch",
 }
 SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
 SLYBOT_DUPE_FILTER = 'slybot.dupefilter.DupeFilterPipeline'
