@@ -6,7 +6,7 @@ import codecs
 from sh_scrapy.hsref import _HubstorageRef
 from sh_scrapy.compat import to_native_str, to_bytes
 
-TEST_AUTH = to_native_str(codecs.encode(to_bytes('1/2/3:authstr'), 'hex'))
+TEST_AUTH = to_native_str(codecs.encode(to_bytes('1/2/3:authstr'), 'hex_codec'))
 
 
 def test_init_disabled():
