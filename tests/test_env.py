@@ -71,7 +71,7 @@ def test_jobname():
 
 def test_jobauth():
     msg = {'key': '1/2/3', 'auth': 'authstring'}
-    expected = codecs.encode(to_bytes('1/2/3:authstring'), 'hex')
+    expected = codecs.encode(to_bytes('1/2/3:authstring'), 'hex_codec')
     assert _jobauth(msg) == to_native_str(expected)
 
 
@@ -80,7 +80,7 @@ def test_get_args_and_env_run_spider():
            'auth': 'auths', 'spider_args': {'arg1': 'val1', 'arg2': 'val2'},
            'settings': {'SETTING1': 'VAL1', 'SETTING2': 'VAL2'}}
     result = get_args_and_env(msg)
-    expected_auth = codecs.encode(to_bytes('1/2/3:auths'), 'hex')
+    expected_auth = codecs.encode(to_bytes('1/2/3:auths'), 'hex_codec')
     assert len(result) == 2
     assert result[0] == ['scrapy', 'crawl', 'test', '-a', 'arg1=val1',
                          '-a', 'arg2=val2', '-s', 'SETTING1=VAL1', '-s',
@@ -105,7 +105,7 @@ def test_get_args_and_env_run_script():
     msg = {'key': '1/2/3', 'job_cmd': ['custom.py', 'arg1'],
            'auth': 'authstring'}
     result = get_args_and_env(msg)
-    expected_auth = codecs.encode(to_bytes('1/2/3:authstring'), 'hex')
+    expected_auth = codecs.encode(to_bytes('1/2/3:authstring'), 'hex_codec')
     assert len(result) == 2
     assert result[0] == ['custom.py', 'arg1']
     assert result[1] == {

@@ -24,7 +24,7 @@ class _HubstorageRef(object):
 
     @property
     def auth(self):
-        return to_native_str(decode(os.environ['SHUB_JOBAUTH'], 'hex'))
+        return to_native_str(decode(os.environ['SHUB_JOBAUTH'], 'hex_codec'))
 
     @property
     def endpoint(self):
