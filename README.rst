@@ -21,16 +21,9 @@ Features
 - custom scripts support
 
 
-Requirements
-============
-
-* Python 2/3
-* Scrapy, python-hubstorage (check requirements.txt for details)
-
-
 Install
 =======
 
-The quick way::
+::
 
     pip install scrapinghub-entrypoint-scrapy
