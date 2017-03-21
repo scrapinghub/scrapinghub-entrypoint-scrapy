@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='scrapinghub-entrypoint-scrapy',
-    version='0.8.12',
+    version='0.9.0',
     license='BSD',
     description='Scrapy entrypoint for Scrapinghub job runner',
     long_description=open('README.rst').read(),
