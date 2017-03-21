@@ -1,15 +1,10 @@
-import os
-import sys
 import mock
 import pytest
-import codecs
 from sh_scrapy.hsref import _HubstorageRef
-from sh_scrapy.compat import to_native_str, to_bytes
-
-TEST_AUTH = to_native_str(codecs.encode(to_bytes('1/2/3:authstr'), 'hex_codec'))
 
 
-def test_init_disabled():
+def test_init_disabled(monkeypatch):
+    monkeypatch.delenv('SHUB_JOBKEY')
     hsref = _HubstorageRef()
     assert not hsref._client
     assert not hsref._project
@@ -22,7 +17,7 @@ def test_init_disabled():
 
 
 @pytest.fixture
-@mock.patch.dict(os.environ, {'SHUB_JOBKEY': '1/2/3'})
+@pytest.mark.usefixtures('set_environment')
 def hsref():
     return _HubstorageRef()
 
@@ -45,12 +40,10 @@ def test_init(hsref):
     assert hsref._jobcounter == 3
 
 
-@mock.patch.dict(os.environ, {'SHUB_JOBAUTH': TEST_AUTH})
 def test_auth(hsref):
     assert hsref.auth == '1/2/3:authstr'
 
 
-@mock.patch.dict(os.environ, {'SHUB_STORAGE': 'storage-url'})
 def test_endpoint(hsref):
     assert hsref.endpoint == 'storage-url'
 
@@ -61,8 +54,6 @@ def test_job_ids(hsref):
     assert hsref.jobid == 3
 
 
-@mock.patch.dict(os.environ, {'SHUB_JOBAUTH': TEST_AUTH,
-                              'SHUB_STORAGE': 'storage-url'})
 def test_client(hsref, hsc_class):
     assert not hsref._client
     assert hsref.client == hsc_class.return_value
@@ -73,10 +64,8 @@ def test_client(hsref, hsc_class):
     assert hsref.client == hsref._client
 
 
-@mock.patch.dict(os.environ, {'SHUB_JOBAUTH': TEST_AUTH,
-                              'SHUB_STORAGE': 'storage-url',
-                              'SHUB_HS_USER_AGENT': 'testUA'})
-def test_client_custom_ua(hsref, hsc_class):
+def test_client_custom_ua(hsref, hsc_class, monkeypatch):
+    monkeypatch.setenv('SHUB_HS_USER_AGENT', 'testUA')
     assert not hsref._client
     assert hsref.client == hsc_class.return_value
     hsc_class.assert_called_with(endpoint='storage-url',

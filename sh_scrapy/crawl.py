@@ -159,8 +159,6 @@ def _launch():
         args, env = get_args_and_env(job)
         os.environ.update(env)
 
-        print(args, env)
-
         from sh_scrapy.log import initialize_logging
         from sh_scrapy.settings import populate_settings  # NOQA
         from sh_scrapy.env import setup_environment
@@ -190,15 +188,26 @@ def list_spiders():
 
 def main():
     try:
+        from sh_scrapy.writer import pipe_writer
+    except Exception:
+        _fatalerror()
+        return 1
+    try:
         _launch()
+    except SystemExit as e:
+        return e.code
+    except:
+        # exception was already handled and logged inside _launch()
+        return 1
     finally:
         sys.stderr = _sys_stderr
         sys.stdout = _sys_stdout
         try:
-            from sh_scrapy.hsref import hsref
-            hsref.close()
+            pipe_writer.close()
         except Exception:
             _fatalerror()
+            return 1
+    return 0
 
 
 if __name__ == '__main__':

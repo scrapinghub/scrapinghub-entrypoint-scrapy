@@ -1,30 +1,21 @@
-import time
 from twisted.internet import task
 from scrapy.statscol import StatsCollector
+
 from sh_scrapy import hsref
+from sh_scrapy.writer import pipe_writer
 
 
 class HubStorageStatsCollector(StatsCollector):
 
-    # TODO: make this configurable per project
-    STATS_TO_COLLECT = [
-        'item_scraped_count',
-        'response_received_count',
-        'scheduler/enqueued',
-        'scheduler/dequeued',
-        'log_count/ERROR',
-    ]
     INTERVAL = 30
 
     def __init__(self, crawler):
         super(HubStorageStatsCollector, self).__init__(crawler)
         self.hsref = hsref.hsref
+        self.pipe_writer = pipe_writer
 
     def _upload_stats(self):
-        row = [int(time.time() * 1000)]
-        row.extend(self._stats.get(x, 0) for x in self.STATS_TO_COLLECT)
-        self.hsref.job.samples.write(row)
-        self.hsref.job.metadata.apipost(jl={'scrapystats': self._stats})
+        self.pipe_writer.write_stats(self._stats)
 
     def open_spider(self, spider):
         self._setup_looping_call(now=True)
