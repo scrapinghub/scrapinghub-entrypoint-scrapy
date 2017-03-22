@@ -132,3 +132,14 @@ def test_set_outcome(writer, queue):
     assert payload == {
         'outcome': outcome
     }
+
+
+def test_writer_raises_runtime_error_if_not_configured():
+    error_msg = "Pipe writer is misconfigured, named pipe path is not set"
+    w = _PipeWriter('')
+    with pytest.raises(RuntimeError) as exc_info:
+        w.write_log(10, 'message')
+    assert exc_info.value.args[0] == error_msg
+    with pytest.raises(RuntimeError) as exc_info:
+        w.close()
+    assert exc_info.value.args[0] == error_msg
