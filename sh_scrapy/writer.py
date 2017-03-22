@@ -27,22 +27,27 @@ class _PipeWriter(object):
         self.path = path or ''
         self._lock = threading.Lock()
         if self.path:
-            self._pipe = open(self.path, 'w')
+            self._pipe = open(self.path, 'wb')
         else:
             self._pipe = None
             self._write = _not_configured
             self.close = _not_configured
 
     def _write(self, command, payload):
+        # binary command
+        command = command.encode('utf-8')
+        # binary payload
+        encoded_payload = json.dumps(
+            payload,
+            separators=(',', ':'),
+            default=jsondefault
+        ).encode('utf-8')
         # write needs to be locked because write can be called from multiple threads
-        encoded_payload = json.dumps(payload,
-                                     separators=(',', ':'),
-                                     default=jsondefault)
         with self._lock:
             self._pipe.write(command)
-            self._pipe.write(' ')
+            self._pipe.write(b' ')
             self._pipe.write(encoded_payload)
-            self._pipe.write('\n')
+            self._pipe.write(b'\n')
             self._pipe.flush()
 
     def write_log(self, level, message):
