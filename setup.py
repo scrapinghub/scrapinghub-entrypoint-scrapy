@@ -10,6 +10,7 @@ setup(
     install_requires=[
         'Scrapy>=1.0',
         'scrapinghub>=1.9.0',
+        'six>=1.5.2',
     ],
     entry_points={
         'console_scripts': [
