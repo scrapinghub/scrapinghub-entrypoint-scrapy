@@ -7,12 +7,31 @@ from scrapinghub.hubstorage.serialization import jsondefault
 from scrapinghub.hubstorage.utils import millitime
 
 
+def _not_configured(*args, **kwargs):
+    raise RuntimeError("Pipe writer is misconfigured, named pipe path is not set")
+
+
 class _PipeWriter(object):
+    """Writer for the Scrapinghub named pipe.
+
+    It's not safe to instantiate and use multiple writers, only one writer
+    should be instantiated and used, otherwise data may be corrupted.
+
+    The object is thread safe.
+
+    :ivar path: Named pipe path
+
+    """
 
     def __init__(self, path):
-        self.path = path
-        self._pipe = open(self.path, 'w')
+        self.path = path or ''
         self._lock = threading.Lock()
+        if self.path:
+            self._pipe = open(self.path, 'w')
+        else:
+            self._pipe = None
+            self._write = _not_configured
+            self.close = _not_configured
 
     def _write(self, command, payload):
         # write needs to be locked because write can be called from multiple threads
@@ -57,7 +76,8 @@ class _PipeWriter(object):
         self._write('FIN', {'outcome': outcome})
 
     def close(self):
-        self._pipe.close()
+        with self._lock:
+            self._pipe.close()
 
 
-pipe_writer = _PipeWriter(os.environ['SHUB_FIFO_PATH'])
+pipe_writer = _PipeWriter(os.environ.get('SHUB_FIFO_PATH', ''))
