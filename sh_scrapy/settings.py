@@ -183,6 +183,7 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
     # Load addons only after we gather all settings
     _load_addons(enabled_addons, settings, merged_settings, priority=0)
     _merge_with_keeping_order(settings, merged_settings.copy_to_dict())
+    _enforce_required_settings(settings)
     return settings
 
 
@@ -219,6 +220,13 @@ def _load_default_settings(settings):
         'LOG_LEVEL': 'INFO',
         'LOG_ENABLED': False,
         'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
+    }, priority='cmdline')
+
+
+def _enforce_required_settings(settings):
+    settings.setdict({
+        # breaks logging and useless in scrapy cloud
+        'LOG_STDOUT': False,
     }, priority='cmdline')
 
 

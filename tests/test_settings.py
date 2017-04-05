@@ -6,6 +6,7 @@ import pytest
 from scrapy import version_info as scrapy_version
 from scrapy.settings import Settings
 from sh_scrapy.settings import EntrypointSettings
+from sh_scrapy.settings import _enforce_required_settings
 from sh_scrapy.settings import _maybe_load_autoscraping_project
 from sh_scrapy.settings import _get_component_base
 from sh_scrapy.settings import _get_action_on_missing_addons
@@ -368,6 +369,18 @@ def test_load_default_settings_mem_limit():
     assert result['MEMUSAGE_LIMIT_MB'] == 200
 
 
+def test_enforce_required_settings_default():
+    settings = Settings({})
+    _enforce_required_settings(settings)
+    assert settings['LOG_STDOUT'] is False
+
+
+def test_enforce_required_settings_rewrite():
+    settings = Settings({'LOG_STDOUT': True})
+    _enforce_required_settings(settings)
+    assert settings['LOG_STDOUT'] is False
+
+
 def test_populate_settings_dont_fail():
     result = populate_settings({})
     assert isinstance(result, Settings)
@@ -380,6 +393,13 @@ def test_populate_settings_dont_fail_with_spider():
     assert isinstance(result, Settings)
     # check one of the settings provided by default by sh_scrapy
     assert result['TELNETCONSOLE_HOST'] == '0.0.0.0'
+
+
+def test_populate_settings_check_required():
+    result = populate_settings({'LOG_STDOUT': True})
+    assert isinstance(result, Settings)
+    # check that some settings fallback to required values
+    assert result['LOG_STDOUT'] is False
 
 
 def test_update_old_classpaths_not_string():
