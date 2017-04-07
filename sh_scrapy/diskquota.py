@@ -18,7 +18,7 @@ class DiskQuota(object):
         return cls(crawler)
 
     def _is_disk_quota_error(self, error):
-        return isinstance(error, IOError) and error.errno == 122
+        return isinstance(error, (OSError, IOError)) and error.errno == 122
 
 
 class DiskQuotaDownloaderMiddleware(DiskQuota):

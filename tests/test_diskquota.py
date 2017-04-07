@@ -35,6 +35,9 @@ def test_disk_quota_check_error(crawler):
     valid_error = IOError()
     valid_error.errno = 122
     assert dquota._is_disk_quota_error(valid_error)
+    other_valid_error = OSError()
+    other_valid_error.errno = 122
+    assert dquota._is_disk_quota_error(other_valid_error)
 
 
 def test_downloaded_mware_process_not_stopped(crawler):
