@@ -356,8 +356,10 @@ def test_load_default_settings():
     assert extensions['scrapy.extensions.debug.StackTraceDump'] == 0
     assert extensions['sh_scrapy.extension.HubstorageExtension'] == 100
     assert 'slybot.closespider.SlybotCloseSpider' not in extensions
-    mwares = result['SPIDER_MIDDLEWARES_BASE']
-    assert 'sh_scrapy.extension.HubstorageMiddleware' in mwares
+    spider_middlewares = result['SPIDER_MIDDLEWARES_BASE']
+    assert 'sh_scrapy.middlewares.HubstorageSpiderMiddleware' in spider_middlewares
+    downloader_middlewares = result['DOWNLOADER_MIDDLEWARES_BASE']
+    assert 'sh_scrapy.middlewares.HubstorageDownloaderMiddleware' in downloader_middlewares
     assert result['MEMUSAGE_LIMIT_MB'] == 950
 
 
