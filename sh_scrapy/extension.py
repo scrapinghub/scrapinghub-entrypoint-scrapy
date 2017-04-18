@@ -1,17 +1,19 @@
-import itertools
 import logging
 from weakref import WeakKeyDictionary
 
-from scrapy.item import BaseItem
 from scrapy import signals, log
 from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
+from scrapy.item import BaseItem
+from scrapy.utils.deprecate import create_deprecated_class
 from scrapy.utils.request import request_fingerprint
 
 from sh_scrapy import hsref
 from sh_scrapy.compat import IS_PYTHON2
 from sh_scrapy.crawl import ignore_warnings
+from sh_scrapy.exceptions import SHScrapyDeprecationWarning
+from sh_scrapy.middlewares import HS_PARENT_ID_KEY, request_id_sequence
 from sh_scrapy.writer import pipe_writer
 
 
@@ -48,13 +50,25 @@ class HubstorageExtension(object):
         self.pipe_writer.set_outcome(reason)
 
 
+_HUBSTORAGE_MIDDLEWARE_WARNING = """\
+{cls} inherits from deprecated class {old}
+
+sh_scrapy.extension.HubstorageMiddleware functionality is now split between two new middlewares:
+
+- sh_scrapy.middlewares.HubstorageDownloaderMiddleware
+- sh_scrapy.middlewares.HubstorageSpiderMiddleware
+
+Please migrate to new middlewares.
+"""
+
+
 class HubstorageMiddleware(object):
 
     def __init__(self):
         self._seen = WeakKeyDictionary()
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
-        self.request_id_sequence = itertools.count()
+        self.request_id_sequence = request_id_sequence
 
     def process_spider_input(self, response, spider):
         self.pipe_writer.write_request(
@@ -63,7 +77,7 @@ class HubstorageMiddleware(object):
             method=response.request.method,
             rs=len(response.body),
             duration=response.meta.get('download_latency', 0) * 1000,
-            parent=response.meta.get('_hsparent'),
+            parent=response.meta.get(HS_PARENT_ID_KEY),
             fp=request_fingerprint(response.request),
         )
         self._seen[response] = next(self.request_id_sequence)
@@ -72,5 +86,13 @@ class HubstorageMiddleware(object):
         parent = self._seen.pop(response)
         for x in result:
             if isinstance(x, Request):
-                x.meta['_hsparent'] = parent
+                x.meta[HS_PARENT_ID_KEY] = parent
             yield x
+
+
+HubstorageMiddleware = create_deprecated_class(
+    "HubstorageMiddleware",
+    HubstorageMiddleware,
+    warn_category=SHScrapyDeprecationWarning,
+    subclass_warn_message=_HUBSTORAGE_MIDDLEWARE_WARNING
+)

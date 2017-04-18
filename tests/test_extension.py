@@ -1,16 +1,17 @@
 import sys
+from weakref import WeakKeyDictionary
+
 import mock
 import pytest
-from weakref import WeakKeyDictionary
+from scrapy import Spider
+from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request, Response
 from scrapy.item import Item
-from scrapy import Spider
-from scrapy.utils.test import get_crawler
-from scrapy.exporters import PythonItemExporter
 from scrapy.utils.request import request_fingerprint
+from scrapy.utils.test import get_crawler
 
-from sh_scrapy.extension import HubstorageExtension
-from sh_scrapy.extension import HubstorageMiddleware
+from sh_scrapy.extension import HubstorageExtension, HubstorageMiddleware
+from sh_scrapy.middlewares import HS_PARENT_ID_KEY
 
 
 @pytest.fixture
@@ -108,5 +109,5 @@ def test_hs_mware_process_spider_output_filter_request(hs_mware):
         response, [child_response, child_request], Spider('test')))
     assert len(result) == 2
     # make sure that we update hsparent meta only for requests
-    assert result[0].meta.get('_hsparent') is None
-    assert result[1].meta['_hsparent'] == 'riq'
+    assert result[0].meta.get(HS_PARENT_ID_KEY) is None
+    assert result[1].meta[HS_PARENT_ID_KEY] == 'riq'

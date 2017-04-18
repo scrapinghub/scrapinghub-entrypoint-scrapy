@@ -189,11 +189,12 @@ def _populate_settings_base(apisettings, defaults_func, spider=None):
 
 def _load_default_settings(settings):
     downloader_middlewares = {
-        'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': 0,
+        'sh_scrapy.diskquota.DiskQuotaDownloaderMiddleware': -10000,  # closest to the engine
+        'sh_scrapy.middlewares.HubstorageDownloaderMiddleware': 10000,  # closest to the downloader
     }
     spider_middlewares = {
-        'sh_scrapy.extension.HubstorageMiddleware': 0,
-        'sh_scrapy.diskquota.DiskQuotaSpiderMiddleware': 0,
+        'sh_scrapy.diskquota.DiskQuotaSpiderMiddleware': -10001,  # closest to the engine
+        'sh_scrapy.middlewares.HubstorageSpiderMiddleware': -10000,  # right after disk quota middleware
     }
     extensions = {
         'scrapy.extensions.debug.StackTraceDump': 0,
