@@ -202,11 +202,6 @@ def main():
     finally:
         sys.stderr = _sys_stderr
         sys.stdout = _sys_stdout
-        try:
-            pipe_writer.close()
-        except Exception:
-            _fatalerror()
-            return 1
     return 0
 
 

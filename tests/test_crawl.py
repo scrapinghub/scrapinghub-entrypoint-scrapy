@@ -282,17 +282,7 @@ def test_main(mocked_launch, pipe_writer):
     assert mocked_launch.call_args == ()
     assert sys.stdout == sh_scrapy.crawl._sys_stdout
     assert sys.stderr == sh_scrapy.crawl._sys_stderr
-    assert pipe_writer.close.called
-
-
-@mock.patch('sh_scrapy.crawl._fatalerror')
-@mock.patch('sh_scrapy.writer.pipe_writer')
-@mock.patch('sh_scrapy.crawl._launch')
-def test_main_log_fatal_error_if_pipe_close_fails(mocked_launch, pipe_writer, mocked_fatalerr):
-    pipe_writer.close.side_effect = IOError('some error while closing pipe')
-    main()
-    assert mocked_launch.called
-    assert mocked_launch.call_args == ()
-    assert sys.stdout == sh_scrapy.crawl._sys_stdout
-    assert sys.stderr == sh_scrapy.crawl._sys_stderr
-    assert mocked_fatalerr.called
+    # Pipe writer file object is closed implicitly on program exit.
+    # This ensures that pipe is writable even if main program is fininshed -
+    # e.g. for threads that are not closed yet.
+    assert not pipe_writer.close.called
