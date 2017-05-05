@@ -189,6 +189,7 @@ def list_spiders():
 def main():
     try:
         from sh_scrapy.writer import pipe_writer
+        pipe_writer.open()
     except Exception:
         _fatalerror()
         return 1
