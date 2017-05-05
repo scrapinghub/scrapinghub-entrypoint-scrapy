@@ -26,12 +26,15 @@ class _PipeWriter(object):
     def __init__(self, path):
         self.path = path or ''
         self._lock = threading.Lock()
-        if self.path:
-            self._pipe = open(self.path, 'wb')
-        else:
-            self._pipe = None
+        self._pipe = None
+        if not self.path:
             self._write = _not_configured
+            self.open = _not_configured
             self.close = _not_configured
+
+    def open(self):
+        with self._lock:
+            self._pipe = open(self.path, 'wb')
 
     def _write(self, command, payload):
         # binary command

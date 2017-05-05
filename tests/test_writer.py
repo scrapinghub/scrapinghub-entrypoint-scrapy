@@ -40,6 +40,7 @@ def reader(fifo, queue):
 @pytest.fixture
 def writer(fifo, reader):
     w = _PipeWriter(fifo)
+    w.open()
     try:
         yield w
     finally:

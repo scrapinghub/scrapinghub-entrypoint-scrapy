@@ -278,6 +278,7 @@ def test_list_spiders_handle_fatalerror(mocked_setup, mocked_fatalerr):
 @mock.patch('sh_scrapy.crawl._launch')
 def test_main(mocked_launch, pipe_writer):
     main()
+    assert pipe_writer.open.called
     assert mocked_launch.called
     assert mocked_launch.call_args == ()
     assert sys.stdout == sh_scrapy.crawl._sys_stdout
