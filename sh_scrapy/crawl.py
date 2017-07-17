@@ -128,13 +128,16 @@ def _run_pkgscript(argv):
     d.run_script(scriptname, {'__name__': '__main__'})
 
 
-def _run_usercode(spider, args, apisettings_func, log_handler=None):
+def _run_usercode(spider, args, apisettings_func,
+                  log_handler=None, commands_module=None):
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
         from sh_scrapy.settings import populate_settings
 
         with ignore_warnings(category=ScrapyDeprecationWarning):
             settings = populate_settings(apisettings_func(), spider)
+        if commands_module:
+            settings['COMMANDS_MODULE'] = commands_module
         if log_handler is not None:
             log_handler.setLevel(settings['LOG_LEVEL'])
     except Exception:
@@ -171,6 +174,7 @@ def _launch():
     _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
+# TODO: deprecate
 def list_spiders():
     """ An entrypoint for list-spiders."""
     try:
@@ -184,6 +188,26 @@ def list_spiders():
         raise
 
     _run_usercode(None, ['scrapy', 'list'], _get_apisettings)
+
+
+def shub_image_info():
+    """shub-image-info command
+
+    http://shub.readthedocs.io/en/latest/custom-images-contract.html#contract-statements
+
+    """
+    try:
+        from scrapy.exceptions import ScrapyDeprecationWarning
+        warnings.filterwarnings(
+            'ignore', category=ScrapyDeprecationWarning, module='^sh_scrapy')
+        from sh_scrapy.env import setup_environment
+        setup_environment()
+    except:
+        _fatalerror()
+        raise
+
+    _run_usercode(None, ['scrapy', 'shub_image_info'] + sys.argv[1:],
+                  _get_apisettings, commands_module='sh_scrapy.commands')
 
 
 def main():
