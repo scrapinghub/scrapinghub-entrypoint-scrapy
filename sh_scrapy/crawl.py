@@ -137,7 +137,7 @@ def _run_usercode(spider, args, apisettings_func,
         with ignore_warnings(category=ScrapyDeprecationWarning):
             settings = populate_settings(apisettings_func(), spider)
         if commands_module:
-            settings['COMMANDS_MODULE'] = commands_module
+            settings.set('COMMANDS_MODULE', commands_module, priority=40)
         if log_handler is not None:
             log_handler.setLevel(settings['LOG_LEVEL'])
     except Exception:
