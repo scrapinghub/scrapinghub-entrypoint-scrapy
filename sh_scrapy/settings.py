@@ -16,6 +16,12 @@ REPLACE_ADDONS_PATHS = {
         "scrapy_dotpersistence.DotScrapyPersistence",
     "scrapylib.deltafetch.DeltaFetch":
         "scrapy_deltafetch.middleware.DeltaFetch",
+    "scrapylib.magicfields.MagicFieldsMiddleware":
+        "scrapy_magicfields.MagicFieldsMiddleware",
+    "scrapylib.querycleaner.QueryCleanerMiddleware":
+        "scrapy_querycleaner.QueryCleanerMiddleware",
+    "scrapylib.splitvariants.SplitVariantsMiddleware":
+        "scrapy_splitvariants.SplitVariantsMiddleware",
 }
 SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
 SLYBOT_DUPE_FILTER = 'slybot.dupefilter.DupeFilterPipeline'
