@@ -1,5 +1,5 @@
 from twisted.internet import task
-from scrapy.statscol import StatsCollector
+from scrapy.statscollectors import StatsCollector
 
 from sh_scrapy import hsref
 from sh_scrapy.writer import pipe_writer
