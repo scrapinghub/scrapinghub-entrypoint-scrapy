@@ -15,7 +15,7 @@ REPLACE_ADDONS_PATHS = {
     "hworker.bot.ext.persistence.DotScrapyPersistence":
         "scrapy_dotpersistence.DotScrapyPersistence",
     "scrapylib.deltafetch.DeltaFetch":
-        "scrapy_deltafetch.middleware.DeltaFetch",
+        "scrapy_deltafetch.DeltaFetch",
     "scrapylib.magicfields.MagicFieldsMiddleware":
         "scrapy_magicfields.MagicFieldsMiddleware",
     "scrapylib.querycleaner.QueryCleanerMiddleware":
