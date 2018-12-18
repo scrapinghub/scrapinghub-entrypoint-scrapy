@@ -16,6 +16,7 @@ setup(
             'start-crawl = sh_scrapy.crawl:main',
             'list-spiders = sh_scrapy.crawl:list_spiders',
             'shub-image-info = sh_scrapy.crawl:shub_image_info',
+            'test-crawl = sh_scrapy.local:test_crawl',
         ],
     },
     classifiers=[

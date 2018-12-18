@@ -239,3 +239,8 @@ def _enforce_required_settings(settings):
 
 def populate_settings(apisettings, spider=None):
     return _populate_settings_base(apisettings, _load_default_settings, spider)
+
+
+def populate_base_settings(apisettings, spider=None):
+    """Populate settings ignoring default ones."""
+    return _populate_settings_base(apisettings, lambda settings: None, spider)
