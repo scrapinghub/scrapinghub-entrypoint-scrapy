@@ -22,6 +22,8 @@ REPLACE_ADDONS_PATHS = {
         "scrapy_querycleaner.QueryCleanerMiddleware",
     "scrapylib.splitvariants.SplitVariantsMiddleware":
         "scrapy_splitvariants.SplitVariantsMiddleware",
+    "scrapy.contrib.throttle.AutoThrottle":
+        "scrapy.extensions.throttle.AutoThrottle",
 }
 SLYBOT_SPIDER_MANAGER = 'slybot.spidermanager.ZipfileSlybotSpiderManager'
 SLYBOT_DUPE_FILTER = 'slybot.dupefilter.DupeFilterPipeline'

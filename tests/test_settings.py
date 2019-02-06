@@ -315,14 +315,13 @@ def test_populate_settings_keep_user_priorities(get_settings_mock):
                                 'scrapy.contrib.throttle.AutoThrottle': 5}},
         'enabled_addons': [addon]}
     result = _populate_settings_base(api_settings, lambda x: x, spider=True)
-    assert result.getdict('EXTENSIONS_BASE')[
-        'sh_scrapy.extension.HubstorageExtension'] is None
-    assert result.getdict('EXTENSIONS_BASE').get(
-        'scrapy.contrib.throttle.AutoThrottle') is None
-    assert result.getdict('EXTENSIONS_BASE')[
-        'scrapy.extensions.throttle.AutoThrottle'] == 5
     assert result.getdict('SPIDER_MIDDLEWARES_BASE')[
         'scrapy.utils.misc.load_object'] == 1
+    assert result.getdict('EXTENSIONS_BASE')[
+        'sh_scrapy.extension.HubstorageExtension'] is None
+    autothrottles = [k for k in result.getdict('EXTENSIONS_BASE')
+                     if 'AutoThrottle' in k]
+    assert result.getdict('EXTENSIONS_BASE')[autothrottles[0]] == 5
 
 
 def test_populate_settings_unique_update_dict():
@@ -343,8 +342,7 @@ def test_populate_settings_keep_user_priorities_oldpath(get_settings_mock):
     autothrottles = [k for k in result.getdict('EXTENSIONS_BASE')
                      if 'AutoThrottle' in k]
     assert len(autothrottles) == 1
-    assert result.getdict('EXTENSIONS_BASE')[
-        'scrapy.extensions.throttle.AutoThrottle'] is 0
+    assert result.getdict('EXTENSIONS_BASE')[autothrottles[0]] is 0
 
 
 def test_load_default_settings():
@@ -409,12 +407,12 @@ def test_update_old_classpaths_not_string():
     class CustomObject(object):
         pass
 
-    test_value = {'scrapy.contrib.exporter.CustomExporter': 1,
+    test_value = {'scrapy.exporter.CustomExporter': 1,
                   123: 2, CustomObject: 3}
     test_settings = Settings({'SOME_SETTING': test_value})
     _update_old_classpaths(test_settings)
-    expected = test_settings['SOME_SETTING'].keys()
+    expected = test_settings['SOME_SETTING']
     assert len(expected) == 3
     assert 123 in expected
     assert CustomObject in expected
-    assert 'scrapy.exporters.CustomExporter' in expected
+    assert 'scrapy.exporter.CustomExporter' in expected
