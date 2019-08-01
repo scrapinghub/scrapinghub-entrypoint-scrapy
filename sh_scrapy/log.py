@@ -4,7 +4,7 @@ import sys
 import warnings
 
 from twisted.python import log as txlog
-from scrapy import log, __version__
+from scrapy import __version__
 
 from sh_scrapy.compat import to_native_str
 from sh_scrapy.writer import pipe_writer
@@ -69,15 +69,10 @@ def initialize_logging():
 
     # Scrapy specifics
     if 'SCRAPY_JOB' in os.environ:
-        log.msg("Scrapy %s started" % __version__)
-        log.start = _dummy  # ugly but needed to prevent scrapy re-opening the log
+        logger = logging.getLogger(__name__)
+        logger.info("Scrapy %s started" % __version__)
 
     return hdlr
-
-
-def _dummy(*a, **kw):
-    """Scrapy log.start dummy monkeypatch"""
-    pass
 
 
 class HubstorageLogHandler(logging.Handler):

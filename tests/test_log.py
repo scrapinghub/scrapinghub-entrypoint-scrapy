@@ -5,8 +5,7 @@ import pytest
 import sys
 import zlib
 
-import scrapy.log
-from sh_scrapy.log import _dummy, _stdout, _stderr
+from sh_scrapy.log import _stdout, _stderr
 from sh_scrapy.log import initialize_logging
 from sh_scrapy.log import HubstorageLogHandler
 from sh_scrapy.log import HubstorageLogObserver
@@ -51,16 +50,6 @@ def test_initialize_logging_dont_fail(observer, txlog_start):
     assert isinstance(loghandler, HubstorageLogHandler)
     assert loghandler.level == logging.INFO
     assert loghandler.formatter._fmt == '[%(name)s] %(message)s'
-
-
-@mock.patch('sh_scrapy.log.pipe_writer')
-def test_initialize_logging_test_scrapy_specific(pipe_writer):
-    """Make sure we reset scrapy.log.start"""
-    loghandler = initialize_logging()
-    assert scrapy.log.start == _dummy
-    # test it doesn't fail
-    scrapy.log.start()
-
 
 @mock.patch('sh_scrapy.log.pipe_writer')
 def test_hs_loghandler_emit_ok(pipe_writer):
