@@ -1,7 +1,7 @@
 import logging
 from weakref import WeakKeyDictionary
 
-from scrapy import signals, log
+from scrapy import signals
 from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
@@ -24,6 +24,7 @@ class HubstorageExtension(object):
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
         self.crawler = crawler
+        self.logger = logging.getLogger(__name__)
         self._write_item = self.pipe_writer.write_item
         # https://github.com/scrapy/scrapy/commit/c76190d491fca9f35b6758bdc06c34d77f5d9be9
         exporter_kwargs = {'binary': False} if not IS_PYTHON2 else {}
@@ -39,7 +40,7 @@ class HubstorageExtension(object):
 
     def item_scraped(self, item, spider):
         if not isinstance(item, (dict, BaseItem)):
-            log.msg("Wrong item type: %s" % item, level=logging.ERROR)
+            self.logger.error("Wrong item type: %s" % item)
             return
         type_ = type(item).__name__
         item = self.exporter.export_item(item)
