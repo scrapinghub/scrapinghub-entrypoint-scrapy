@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 import warnings
 
@@ -66,12 +65,6 @@ def initialize_logging():
     _oldshowwarning = warnings.showwarning
     txlog.startLoggingWithObserver(obs.emit, setStdout=False)
     warnings.showwarning = _oldshowwarning
-
-    # Scrapy specifics
-    if 'SCRAPY_JOB' in os.environ:
-        logger = logging.getLogger(__name__)
-        logger.info("Scrapy %s started" % __version__)
-
     return hdlr
 
 
