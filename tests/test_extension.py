@@ -62,7 +62,7 @@ def test_hs_ext_attrs_item_scraped(hs_ext):
         return
 
     @attr.s
-    class AttrsItem:
+    class AttrsItem(object):
         pass
 
     hs_ext._write_item = mock.Mock()
