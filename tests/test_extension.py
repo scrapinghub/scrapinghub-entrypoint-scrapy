@@ -57,6 +57,7 @@ def test_hs_ext_dataclass_item_scraped(hs_ext):
 def test_hs_ext_attrs_item_scraped(hs_ext):
     try:
         import attr
+        import iteamadapter
     except ImportError:
         pytest.skip('attrs not installed')
         return
