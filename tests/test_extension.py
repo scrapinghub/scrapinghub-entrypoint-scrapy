@@ -38,6 +38,42 @@ def test_hs_ext_binary_exporter_py3(hs_ext):
     assert not getattr(hs_ext.exporter, 'binary')
 
 
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
+def test_hs_ext_dataclass_item_scraped(hs_ext):
+    from dataclasses import dataclass
+
+    @dataclass
+    class DataclassItem:
+        pass
+
+    hs_ext._write_item = mock.Mock()
+    item = DataclassItem()
+    spider = Spider('test')
+    hs_ext.item_scraped(item, spider)
+    assert hs_ext._write_item.call_count == 1
+    assert hs_ext._write_item.call_args[0] == ({'_type': 'DataclassItem'},)
+
+
+def test_hs_ext_attrs_item_scraped(hs_ext):
+    try:
+        import attr
+        import iteamadapter
+    except ImportError:
+        pytest.skip('attrs not installed')
+        return
+
+    @attr.s
+    class AttrsItem(object):
+        pass
+
+    hs_ext._write_item = mock.Mock()
+    item = AttrsItem()
+    spider = Spider('test')
+    hs_ext.item_scraped(item, spider)
+    assert hs_ext._write_item.call_count == 1
+    assert hs_ext._write_item.call_args[0] == ({'_type': 'AttrsItem'},)
+
+
 def test_hs_ext_item_scraped(hs_ext):
     hs_ext._write_item = mock.Mock()
     item = Item()

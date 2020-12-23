@@ -17,6 +17,13 @@ from sh_scrapy.middlewares import HS_PARENT_ID_KEY, request_id_sequence
 from sh_scrapy.writer import pipe_writer
 
 
+try:
+    from itemadapter import is_item
+except ImportError:
+    def is_item(item):
+        return isinstance(item, (dict, BaseItem))
+
+
 class HubstorageExtension(object):
     """Extension to write scraped items to HubStorage"""
 
@@ -39,7 +46,7 @@ class HubstorageExtension(object):
         return o
 
     def item_scraped(self, item, spider):
-        if not isinstance(item, (dict, BaseItem)):
+        if not is_item(item):
             self.logger.error("Wrong item type: %s" % item)
             return
         type_ = type(item).__name__
