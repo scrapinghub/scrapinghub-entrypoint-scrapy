@@ -4,4 +4,4 @@ dist
 *.pyc
 .eggs/
 .tox
-
+/.coverage
