@@ -10,12 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - python-version: "2.7"
+        - python-version: "3.5"
           env:
-            TOXENV: py27
-        - python-version: "2.7"
-          env:
-            TOXENV: py27-scrapy105
+            TOXENV: py35-scrapy18
         - python-version: "3.5"
           env:
             TOXENV: py35
