@@ -20,10 +20,17 @@ class Command(ScrapyCommand):
 
     def add_options(self, parser):
         super(Command, self).add_options(parser)
-        parser.add_option("--debug", action="store_true",
-                          help="add debugging information such as "
-                               "list of installed Debian packages "
-                               "and Python packages.")
+        # backward compatibility for optparse/argparse
+        try:
+            add_argument = parser.add_argument
+        except AttributeError:
+            add_argument = parser.add_option
+        add_argument(
+            "--debug",
+            action="store_true",
+            help="add debugging information such as list of "
+                 "installed Debian packages and Python packages.",
+        )
 
     def run(self, args, opts):
         result = {

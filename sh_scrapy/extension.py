@@ -1,11 +1,12 @@
 import logging
+from contextlib import suppress
 from weakref import WeakKeyDictionary
 
+import scrapy
 from scrapy import signals
 from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
-from scrapy.item import BaseItem
 from scrapy.utils.deprecate import create_deprecated_class
 from scrapy.utils.request import request_fingerprint
 
@@ -20,8 +21,12 @@ from sh_scrapy.writer import pipe_writer
 try:
     from itemadapter import is_item
 except ImportError:
+    _base_item_cls = [dict, scrapy.item.Item]
+    with suppress(AttributeError):
+        _base_item_cls.append(scrapy.item.BaseItem)
+
     def is_item(item):
-        return isinstance(item, (dict, BaseItem))
+        return isinstance(item, tuple(_base_item_cls))
 
 
 class HubstorageExtension(object):
