@@ -48,6 +48,7 @@ jobs:
         pip install tox
 
     - name: Run tests
+      env: ${{ matrix.env }}
       run: tox
 
     - name: Upload coverage report
