@@ -24,7 +24,7 @@ def test_optparse(command):
     parser = OptionParser()
     command.add_options(parser)
     options = parser.parse_args(["--debug"])
-    assert options.debug
+    assert options[0].debug
 
 
 @pytest.mark.skipif(
