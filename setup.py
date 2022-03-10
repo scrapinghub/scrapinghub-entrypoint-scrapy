@@ -5,7 +5,7 @@ setup(
     version='0.13.0',
     license='BSD',
     description='Scrapy entrypoint for Scrapinghub job runner',
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     packages=find_packages(),
     install_requires=[
         'Scrapy>=1.0',
