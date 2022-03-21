@@ -32,11 +32,20 @@ def to_bytes(text, encoding=None, errors='strict'):
     if isinstance(text, bytes):
         return text
     if not isinstance(text, str):
-        raise TypeError('to_bytes must receive a unicode, str or bytes '
+        raise TypeError('to_bytes must receive a str or bytes '
                         'object, got %s' % type(text).__name__)
     if encoding is None:
         encoding = 'utf-8'
     return text.encode(encoding, errors)
+
+
+def is_string(var):
+    warnings.warn(
+        f"{_qualname(is_string)} is deprecated, please use isinstance(<var>, str) instead",
+        category=ScrapyDeprecationWarning,
+        stacklevel=2,
+    )
+    return isinstance(var, str)
 
 
 def to_native_str(text, encoding=None, errors='strict'):
