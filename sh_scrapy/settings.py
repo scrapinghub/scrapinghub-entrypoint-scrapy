@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import tempfile
-from sh_scrapy.compat import to_native_str, is_string
+from sh_scrapy.compat import to_native_str
 from scrapy.settings import Settings
 from scrapy.utils.misc import load_object
 from scrapy.utils.project import get_project_settings
@@ -55,7 +55,7 @@ class EntrypointSettings(Settings):
     def set(self, name, value, priority='project'):
         super(EntrypointSettings, self).set(
             to_native_str(name),
-            to_native_str(value) if is_string(value) else value,
+            to_native_str(value) if isinstance(value, str) else value,
             priority=priority)
 
     def copy_to_dict(self):
@@ -110,7 +110,7 @@ def _update_old_classpaths(settings):
         elif not isinstance(setting_value, dict):
             continue
         for path in setting_value.keys():
-            if not is_string(path):
+            if not isinstance(path, str):
                 continue
             updated_path = update_classpath(path)
             if updated_path != path:

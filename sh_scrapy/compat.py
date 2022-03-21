@@ -3,10 +3,6 @@ TEXT_TYPE = str
 BINARY_TYPE = bytes
 
 
-def is_string(var):
-    return isinstance(var, STRING_TYPE)
-
-
 def to_unicode(text, encoding=None, errors='strict'):
     """Return the unicode representation of `text`.
 
