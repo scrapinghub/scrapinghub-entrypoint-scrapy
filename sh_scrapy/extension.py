@@ -11,7 +11,6 @@ from scrapy.utils.deprecate import create_deprecated_class
 from scrapy.utils.request import request_fingerprint
 
 from sh_scrapy import hsref
-from sh_scrapy.compat import IS_PYTHON2
 from sh_scrapy.crawl import ignore_warnings
 from sh_scrapy.exceptions import SHScrapyDeprecationWarning
 from sh_scrapy.middlewares import HS_PARENT_ID_KEY, request_id_sequence
@@ -39,7 +38,7 @@ class HubstorageExtension(object):
         self.logger = logging.getLogger(__name__)
         self._write_item = self.pipe_writer.write_item
         # https://github.com/scrapy/scrapy/commit/c76190d491fca9f35b6758bdc06c34d77f5d9be9
-        exporter_kwargs = {'binary': False} if not IS_PYTHON2 else {}
+        exporter_kwargs = {'binary': False}
         with ignore_warnings(category=ScrapyDeprecationWarning):
             self.exporter = PythonItemExporter(**exporter_kwargs)
 
