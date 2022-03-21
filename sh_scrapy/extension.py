@@ -24,9 +24,10 @@ except ImportError:
     _base_item_cls = [dict, scrapy.item.Item]
     with suppress(AttributeError):
         _base_item_cls.append(scrapy.item.BaseItem)
+    _base_item_cls = tuple(_base_item_cls)
 
     def is_item(item):
-        return isinstance(item, tuple(_base_item_cls))
+        return isinstance(item, _base_item_cls)
 else:
     def is_item(item):
         return ItemAdapter.is_item(item)
