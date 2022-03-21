@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import tempfile
-from sh_scrapy.compat import to_native_str
+from sh_scrapy.compat import to_str
 from scrapy.settings import Settings
 from scrapy.utils.misc import load_object
 from scrapy.utils.project import get_project_settings
@@ -54,8 +54,8 @@ class EntrypointSettings(Settings):
 
     def set(self, name, value, priority='project'):
         super(EntrypointSettings, self).set(
-            to_native_str(name),
-            to_native_str(value) if isinstance(value, str) else value,
+            to_str(name),
+            to_str(value) if isinstance(value, str) else value,
             priority=priority)
 
     def copy_to_dict(self):

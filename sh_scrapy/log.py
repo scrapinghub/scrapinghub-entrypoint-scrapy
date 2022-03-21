@@ -5,7 +5,7 @@ import warnings
 from twisted.python import log as txlog
 from scrapy import __version__
 
-from sh_scrapy.compat import to_native_str
+from sh_scrapy.compat import to_str
 from sh_scrapy.writer import pipe_writer
 
 
@@ -120,7 +120,7 @@ class HubstorageLogObserver(object):
 
         msg = ev.get('message')
         if msg:
-            msg = to_native_str(msg[0])
+            msg = to_str(msg[0])
 
         failure = ev.get('failure', None)
         if failure:
@@ -156,7 +156,7 @@ class StdoutLogger(txlog.StdioOnnaStick):
         _logfn(message=self.prefix + msg, level=self.loglevel)
 
     def write(self, data):
-        data = to_native_str(data, self.encoding)
+        data = to_str(data, self.encoding)
 
         d = (self.buf + data).split('\n')
         self.buf = d[-1]
@@ -166,5 +166,5 @@ class StdoutLogger(txlog.StdioOnnaStick):
 
     def writelines(self, lines):
         for line in lines:
-            line = to_native_str(line, self.encoding)
+            line = to_str(line, self.encoding)
             self._logprefixed(line)

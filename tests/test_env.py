@@ -5,7 +5,7 @@ import codecs
 import pytest
 import tempfile
 
-from sh_scrapy.compat import to_bytes, to_native_str
+from sh_scrapy.compat import to_bytes, to_str
 
 from sh_scrapy.env import _jobauth
 from sh_scrapy.env import _jobname
@@ -72,7 +72,7 @@ def test_jobname():
 def test_jobauth():
     msg = {'key': '1/2/3', 'auth': 'authstring'}
     expected = codecs.encode(to_bytes('1/2/3:authstring'), 'hex_codec')
-    assert _jobauth(msg) == to_native_str(expected)
+    assert _jobauth(msg) == to_str(expected)
 
 
 def test_get_args_and_env_run_spider():
@@ -88,7 +88,7 @@ def test_get_args_and_env_run_spider():
     assert result[1] == {'SCRAPY_JOB': '1/2/3',
                          'SCRAPY_PROJECT_ID': '1',
                          'SCRAPY_SPIDER': 'test',
-                         'SHUB_JOBAUTH': to_native_str(expected_auth),
+                         'SHUB_JOBAUTH': to_str(expected_auth),
                          'SHUB_JOBKEY': '1/2/3',
                          'SHUB_JOBNAME': 'test',
                          'SHUB_JOB_TAGS': '',
@@ -109,7 +109,7 @@ def test_get_args_and_env_run_script():
     assert len(result) == 2
     assert result[0] == ['custom.py', 'arg1']
     assert result[1] == {
-        'SHUB_JOBAUTH': to_native_str(expected_auth),
+        'SHUB_JOBAUTH': to_str(expected_auth),
         'SHUB_JOBKEY': '1/2/3',
         'SHUB_JOBNAME': 'custom.py',
         'SHUB_JOB_TAGS': ''}
