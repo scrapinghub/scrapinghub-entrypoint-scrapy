@@ -55,7 +55,7 @@ class EntrypointSettings(Settings):
     def set(self, name, value, priority='project'):
         super(EntrypointSettings, self).set(
             to_str(name),
-            to_str(value) if isinstance(value, str) else value,
+            value if isinstance(value, str) else value,
             priority=priority)
 
     def copy_to_dict(self):
