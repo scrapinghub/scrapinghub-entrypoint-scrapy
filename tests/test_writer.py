@@ -3,8 +3,8 @@ import json
 import logging
 import os
 import threading
+from queue import Queue
 
-from six.moves.queue import Queue
 import pytest
 
 from sh_scrapy.writer import _PipeWriter
