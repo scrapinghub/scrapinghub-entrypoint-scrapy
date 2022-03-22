@@ -1,6 +1,56 @@
-import pytest
+import warnings
 
-from scrapy.utils.python import to_bytes, to_unicode
+import pytest
+from scrapy.exceptions import ScrapyDeprecationWarning
+
+from sh_scrapy.compat import is_string, to_bytes, to_unicode, to_native_str
+
+
+# test deprecation messages
+
+def test_deprecated_is_string():
+    with warnings.catch_warnings(record=True) as caught:
+        assert is_string("foo")
+        assert not is_string(b"foo")
+        assert not is_string(1)
+        assert (
+            "is_string(var) is deprecated, please use isinstance(var, str) instead"
+            == str(caught[0].message)
+        )
+        assert caught[0].category is ScrapyDeprecationWarning
+
+
+def test_deprecated_to_unicode():
+    with warnings.catch_warnings(record=True) as caught:
+        assert to_unicode("foo") == "foo"
+        assert to_unicode(b"foo") == "foo"
+        assert (
+            "Call to deprecated function to_unicode. Use scrapy.utils.python.to_unicode instead."
+            == str(caught[0].message)
+        )
+        assert caught[0].category is ScrapyDeprecationWarning
+
+
+def test_deprecated_to_native_str():
+    with warnings.catch_warnings(record=True) as caught:
+        assert to_native_str("foo") == "foo"
+        assert to_native_str(b"foo") == "foo"
+        assert (
+            "Call to deprecated function to_native_str. Use scrapy.utils.python.to_unicode instead."
+            == str(caught[0].message)
+        )
+        assert caught[0].category is ScrapyDeprecationWarning
+
+
+def test_deprecated_to_bytes():
+    with warnings.catch_warnings(record=True) as caught:
+        assert to_bytes("foo") == b"foo"
+        assert to_bytes(b"foo") == b"foo"
+        assert (
+            "Call to deprecated function to_bytes. Use scrapy.utils.python.to_bytes instead."
+            == str(caught[0].message)
+        )
+        assert caught[0].category is ScrapyDeprecationWarning
 
 
 # Testing to_unicode conversion
