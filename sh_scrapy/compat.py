@@ -1,3 +1,4 @@
+import sys
 import warnings
 
 from scrapy.exceptions import ScrapyDeprecationWarning
@@ -5,6 +6,19 @@ from scrapy.utils.decorators import deprecated
 from scrapy.utils.python import (
     to_bytes as scrapy_to_bytes,
     to_unicode as scrapy_to_unicode,
+)
+
+
+IS_PYTHON2 = sys.version_info < (3,)
+STRING_TYPE = str
+TEXT_TYPE = str
+BINARY_TYPE = bytes
+
+
+warnings.warn(
+    "The sh_scrapy.compat module is deprecated, use the functions in scrapy.utils.python instead",
+    category=ScrapyDeprecationWarning,
+    stacklevel=2,
 )
 
 
