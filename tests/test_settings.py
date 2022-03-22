@@ -1,10 +1,12 @@
-
 import os
 import sys
 import mock
+
 import pytest
 from scrapy import version_info as scrapy_version
 from scrapy.settings import Settings
+from scrapy.utils.python import to_unicode
+
 from sh_scrapy.settings import EntrypointSettings
 from sh_scrapy.settings import _enforce_required_settings
 from sh_scrapy.settings import _maybe_load_autoscraping_project
@@ -15,8 +17,6 @@ from sh_scrapy.settings import _populate_settings_base
 from sh_scrapy.settings import _load_default_settings
 from sh_scrapy.settings import _update_old_classpaths
 from sh_scrapy.settings import populate_settings
-
-from sh_scrapy.compat import to_str
 
 
 TEST_ADDON = {
@@ -91,7 +91,7 @@ def test_update_settings_check_unicode_in_py2_key():
     test = EntrypointSettings()
     test.setdict({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test['\xf1e\xf1e\xf1e'] == 'test'
-    assert test[to_str('\xf1e\xf1e\xf1e')] == 'test'
+    assert test[to_unicode('\xf1e\xf1e\xf1e')] == 'test'
 
 
 @pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
@@ -100,8 +100,8 @@ def test_update_settings_check_unicode_in_py2_key_value():
     test = EntrypointSettings()
     test.setdict({'\xf1e\xf1e\xf1e': '\xf1e\xf1e'}, 10)
     assert test['\xf1e\xf1e\xf1e'] == '\xf1e\xf1e'
-    native_key = to_str('\xf1e\xf1e\xf1e')
-    assert test[native_key] == to_str('\xf1e\xf1e')
+    native_key = to_unicode('\xf1e\xf1e\xf1e')
+    assert test[native_key] == to_unicode('\xf1e\xf1e')
 
 
 @pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")

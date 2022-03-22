@@ -1,29 +1,29 @@
 import pytest
 
-from sh_scrapy.compat import to_bytes, to_str
+from scrapy.utils.python import to_bytes, to_unicode
 
 
-# Testing to_str conversion
+# Testing to_unicode conversion
 
 def test_to_str_an_utf8_encoded_string_to_str():
-    assert to_str(b'lel\xc3\xb1e') == u'lel\xf1e'
+    assert to_unicode(b'lel\xc3\xb1e') == u'lel\xf1e'
 
 
 def test_to_str_a_latin_1_encoded_string_to_str():
-    assert to_str(b'lel\xf1e', 'latin-1') == u'lel\xf1e'
+    assert to_unicode(b'lel\xf1e', 'latin-1') == u'lel\xf1e'
 
 
 def test_to_str_a_unicode_to_str_should_return_the_same_object():
-    assert to_str(u'\xf1e\xf1e\xf1e') == u'\xf1e\xf1e\xf1e'
+    assert to_unicode(u'\xf1e\xf1e\xf1e') == u'\xf1e\xf1e\xf1e'
 
 
 def test_to_str_a_strange_object_should_raise_TypeError():
     with pytest.raises(TypeError) as excinfo:
-        to_str(123)
+        to_unicode(123)
 
 
 def test_to_str_errors_argument():
-    assert to_str(b'a\xedb', 'utf-8', errors='replace') == u'a\ufffdb'
+    assert to_unicode(b'a\xedb', 'utf-8', errors='replace') == u'a\ufffdb'
 
 
 # Testing to_bytes conversion
