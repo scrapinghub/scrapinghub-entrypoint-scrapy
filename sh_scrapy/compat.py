@@ -1,4 +1,3 @@
-import sys
 import warnings
 
 from scrapy.exceptions import ScrapyDeprecationWarning
@@ -9,7 +8,7 @@ from scrapy.utils.python import (
 )
 
 
-IS_PYTHON2 = sys.version_info < (3,)
+IS_PYTHON2 = False
 STRING_TYPE = str
 TEXT_TYPE = str
 BINARY_TYPE = bytes
