@@ -3,8 +3,8 @@ import sys
 import warnings
 
 from scrapy import __version__
-from twisted.python import log as txlog
 from scrapy.utils.python import to_unicode
+from twisted.python import log as txlog
 
 from sh_scrapy.writer import pipe_writer
 
