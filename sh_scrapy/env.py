@@ -2,7 +2,8 @@ import os
 import json
 import codecs
 from base64 import b64decode
-from sh_scrapy.compat import to_bytes, to_native_str, is_string
+
+from scrapy.utils.python import to_bytes, to_unicode
 
 
 def _make_scrapy_args(arg, args_dict):
@@ -11,7 +12,7 @@ def _make_scrapy_args(arg, args_dict):
     args = []
     for k, v in sorted(dict(args_dict).items()):
         args += [arg, "{}={}".format(
-            to_native_str(k), to_native_str(v) if is_string(v) else v)]
+            to_unicode(k), to_unicode(v) if isinstance(v, str) else v)]
     return args
 
 
@@ -36,7 +37,7 @@ def _job_args_and_env(msg):
     cmd = msg.get('job_cmd')
     if not isinstance(cmd, list):
         cmd = [str(cmd)]
-    return cmd, {to_native_str(k): to_native_str(v) if is_string(v) else v
+    return cmd, {to_unicode(k): to_unicode(v) if isinstance(v, str) else v
                  for k, v in sorted(dict(env).items())}
 
 
@@ -51,7 +52,7 @@ def _jobname(msg):
 
 def _jobauth(msg):
     auth_data = to_bytes('{0[key]}:{0[auth]}'.format(msg))
-    return to_native_str(codecs.encode(auth_data, 'hex_codec'))
+    return to_unicode(codecs.encode(auth_data, 'hex_codec'))
 
 
 def get_args_and_env(msg):

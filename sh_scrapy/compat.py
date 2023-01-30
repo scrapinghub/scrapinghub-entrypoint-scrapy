@@ -1,62 +1,45 @@
-import sys
+import warnings
+
+from scrapy.exceptions import ScrapyDeprecationWarning
+from scrapy.utils.decorators import deprecated
+from scrapy.utils.python import (
+    to_bytes as scrapy_to_bytes,
+    to_unicode as scrapy_to_unicode,
+)
 
 
-IS_PYTHON2 = sys.version_info < (3,)
-if IS_PYTHON2:
-    STRING_TYPE = basestring
-    TEXT_TYPE = unicode
-    BINARY_TYPE = str
-else:
-    STRING_TYPE = str
-    TEXT_TYPE = str
-    BINARY_TYPE = bytes
+IS_PYTHON2 = False
+STRING_TYPE = str
+TEXT_TYPE = str
+BINARY_TYPE = bytes
+
+
+warnings.warn(
+    "The sh_scrapy.compat module is deprecated, use the functions in scrapy.utils.python instead",
+    category=ScrapyDeprecationWarning,
+    stacklevel=2,
+)
 
 
 def is_string(var):
-    return isinstance(var, STRING_TYPE)
+    warnings.warn(
+        "is_string(var) is deprecated, please use isinstance(var, str) instead",
+        category=ScrapyDeprecationWarning,
+        stacklevel=2,
+    )
+    return isinstance(var, str)
 
 
-def to_unicode(text, encoding=None, errors='strict'):
-    """Return the unicode representation of `text`.
-
-    If `text` is already a ``unicode`` object, return it as-is.
-    If `text` is a ``bytes`` object, decode it using `encoding`.
-
-    Otherwise, raise an error.
-
-    """
-    if isinstance(text, TEXT_TYPE):
-        return text
-    if not isinstance(text, BINARY_TYPE):
-        raise TypeError('to_unicode must receive a bytes, str or unicode '
-                        'object, got %s' % type(text).__name__)
-    if encoding is None:
-        encoding = 'utf-8'
-    return text.decode(encoding, errors)
-
-
+@deprecated("scrapy.utils.python.to_bytes")
 def to_bytes(text, encoding=None, errors='strict'):
-    """Return the binary representation of `text`.
-
-    If `text` is already a ``bytes`` object, return it as-is.
-    If `text` is a ``unicode`` object, encode it using `encoding`.
-
-    Otherwise, raise an error."""
-    if isinstance(text, BINARY_TYPE):
-        return text
-    if not isinstance(text, TEXT_TYPE):
-        raise TypeError('to_bytes must receive a unicode, str or bytes '
-                        'object, got %s' % type(text).__name__)
-    if encoding is None:
-        encoding = 'utf-8'
-    return text.encode(encoding, errors)
+    return scrapy_to_bytes(text, encoding, errors)
 
 
+@deprecated("scrapy.utils.python.to_unicode")
 def to_native_str(text, encoding=None, errors='strict'):
-    """Return ``str`` representation of `text`.
+    return scrapy_to_unicode(text, encoding, errors)
 
-    ``str`` representation means ``bytes`` in PY2 and ``unicode`` in PY3.
-    """
-    if IS_PYTHON2:
-        return to_bytes(text, encoding, errors)
-    return to_unicode(text, encoding, errors)
+
+@deprecated("scrapy.utils.python.to_unicode")
+def to_unicode(text, encoding=None, errors='strict'):
+    return scrapy_to_unicode(text, encoding, errors)
