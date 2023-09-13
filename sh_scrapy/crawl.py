@@ -184,7 +184,7 @@ def _launch():
 def list_spiders():
     """ An entrypoint for list-spiders."""
     warnings.warn(
-        "The sh_scrapy.crawl.ignore_warnings function is deprecated.",
+        "The sh_scrapy.crawl.list_spiders function is deprecated.",
         category=SHScrapyDeprecationWarning,
         stacklevel=2,
     )
