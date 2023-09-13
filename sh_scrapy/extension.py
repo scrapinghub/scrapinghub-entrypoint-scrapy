@@ -41,10 +41,7 @@ class HubstorageExtension(object):
         self.crawler = crawler
         self.logger = logging.getLogger(__name__)
         self._write_item = self.pipe_writer.write_item
-        # https://github.com/scrapy/scrapy/commit/c76190d491fca9f35b6758bdc06c34d77f5d9be9
-        exporter_kwargs = {'binary': False}
-        with ignore_warnings(category=ScrapyDeprecationWarning):
-            self.exporter = PythonItemExporter(**exporter_kwargs)
+        self.exporter = PythonItemExporter()
 
     @classmethod
     def from_crawler(cls, crawler):
