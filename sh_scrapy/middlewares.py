@@ -60,6 +60,8 @@ class HubstorageDownloaderMiddleware(object):
             request.meta[HS_PARENT_ID_KEY] = request_id
 
     def process_response(self, request, response, spider):
+        if type(response).__name__ == "DummyResponse":
+            return response
         self.pipe_writer.write_request(
             url=response.url,
             status=response.status,
