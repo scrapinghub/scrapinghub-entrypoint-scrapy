@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
+import sys
 from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
@@ -10,11 +11,6 @@ from scrapy.http import Response
 from sh_scrapy.middlewares import (HS_PARENT_ID_KEY, HS_REQUEST_ID_KEY,
                                    HubstorageDownloaderMiddleware,
                                    HubstorageSpiderMiddleware)
-
-
-@dataclass
-class DummyResponse:
-    url: str
 
 
 @pytest.fixture()
@@ -84,7 +80,12 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
 
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middleware):
+    @dataclass
+    class DummyResponse:
+        url: str
+
     spider = Spider('test')
     url = 'http://resp-url'
 
@@ -109,7 +110,12 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     assert request.meta[HS_PARENT_ID_KEY] is None
 
 
+@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
+    @dataclass
+    class DummyResponse:
+        url: str
+
     spider = Spider('test')
     url = 'http://resp-url'
     request_0 = Request(url)
