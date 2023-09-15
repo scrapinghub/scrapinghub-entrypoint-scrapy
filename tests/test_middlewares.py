@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from weakref import WeakKeyDictionary
-
 import itertools
 import pytest
 import sys
 from scrapy import Spider, Request, Item
 from scrapy.http import Response
+from typing import Optional
 
 from sh_scrapy.middlewares import (
     HubstorageSpiderMiddleware, HubstorageDownloaderMiddleware,
@@ -84,9 +84,10 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
 def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middleware):
     from dataclasses import dataclass
 
-    @dataclass
-    class DummyResponse:
-        url: str
+    @dataclass(unsafe_hash=True)
+    class DummyResponse(Response):
+        def __init__(self, url: str, request=Optional[Request]):
+            super().__init__(url=url, request=request)
 
     spider = Spider('test')
     url = 'http://resp-url'
@@ -95,7 +96,7 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     hs_downloader_middleware.pipe_writer.open()
 
     request = Request(url)
-    response_1 = DummyResponse(url)
+    response_1 = DummyResponse(url, request)
     response_2 = Response(url)
     hs_downloader_middleware.process_request(request, spider)
     hs_downloader_middleware.process_response(request, response_1, spider)
@@ -116,9 +117,10 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
 def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     from dataclasses import dataclass
 
-    @dataclass
-    class DummyResponse:
-        url: str
+    @dataclass(unsafe_hash=True)
+    class DummyResponse(Response):
+        def __init__(self, url: str, request=Optional[Request]):
+            super().__init__(url=url, request=request)
 
     spider = Spider('test')
     url = 'http://resp-url'
@@ -154,7 +156,7 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
 
     request_2 = request_1.copy()
-    response_2_1 = DummyResponse(url)
+    response_2_1 = DummyResponse(url, request_2)
     response_2_2 = Response(url)
 
     hs_downloader_middleware.process_response(request_2, response_2_1, spider)
