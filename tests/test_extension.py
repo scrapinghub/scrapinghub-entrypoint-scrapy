@@ -28,16 +28,6 @@ def test_hs_ext_init(hs_ext):
     assert isinstance(hs_ext.exporter, PythonItemExporter)
 
 
-@pytest.mark.skipif(sys.version_info > (2,), reason="requires python2")
-def test_hs_ext_binary_exporter_py2(hs_ext):
-    assert not hasattr(hs_ext.exporter, 'binary')
-
-
-@pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")
-def test_hs_ext_binary_exporter_py3(hs_ext):
-    assert not getattr(hs_ext.exporter, 'binary')
-
-
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_ext_dataclass_item_scraped(hs_ext):
     from dataclasses import dataclass

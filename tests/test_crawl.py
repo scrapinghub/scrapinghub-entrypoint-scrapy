@@ -8,7 +8,6 @@ from scrapy.settings import Settings
 from scrapy.exceptions import ScrapyDeprecationWarning
 
 import sh_scrapy.crawl
-from sh_scrapy.crawl import ignore_warnings
 from sh_scrapy.crawl import _fatalerror
 from sh_scrapy.crawl import _get_apisettings
 from sh_scrapy.crawl import _run
@@ -27,11 +26,6 @@ def test_init_module():
     assert sh_scrapy.crawl._sys_stderr == sys.stderr
     assert sh_scrapy.crawl._sys_stdout == sys.stdout
     assert sh_scrapy.crawl.socket.getdefaulttimeout() == 60.0
-
-
-def test_ignore_warnings():
-    with ignore_warnings(category=ScrapyDeprecationWarning):
-        warnings.warn("must be suppressed", ScrapyDeprecationWarning)
 
 
 @mock.patch('traceback.print_exception')

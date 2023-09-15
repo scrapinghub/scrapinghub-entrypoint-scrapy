@@ -15,6 +15,8 @@ from contextlib import contextmanager
 # and at that point main() function doesn't completed leading to lost log
 # messages.
 
+from sh_scrapy.exceptions import SHScrapyDeprecationWarning
+
 # Keep a reference to standard output/error as they are redirected
 # at log initialization
 _sys_stderr = sys.stderr  # stderr and stoud are redirected to HS later
@@ -51,6 +53,11 @@ def ignore_warnings(**kwargs):
 
     As warnings.catch_warnings, this context manager is not thread-safe.
     """
+    warnings.warn(
+        "The sh_scrapy.crawl.ignore_warnings function is deprecated.",
+        category=SHScrapyDeprecationWarning,
+        stacklevel=2,
+    )
     _filters = warnings.filters[:]
     warnings.filterwarnings('ignore', **kwargs)
     yield
@@ -174,9 +181,13 @@ def _launch():
     _run_usercode(job['spider'], args, _get_apisettings, loghdlr)
 
 
-# TODO: deprecate
 def list_spiders():
     """ An entrypoint for list-spiders."""
+    warnings.warn(
+        "The sh_scrapy.crawl.list_spiders function is deprecated.",
+        category=SHScrapyDeprecationWarning,
+        stacklevel=2,
+    )
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
         warnings.filterwarnings(
