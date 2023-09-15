@@ -60,8 +60,11 @@ class HubstorageDownloaderMiddleware(object):
             request.meta[HS_PARENT_ID_KEY] = request_id
 
     def process_response(self, request, response, spider):
+        # This class of response check is intended to fix the bug described here
+        # https://github.com/scrapy-plugins/scrapy-zyte-api/issues/112
         if type(response).__name__ == "DummyResponse":
             return response
+
         self.pipe_writer.write_request(
             url=response.url,
             status=response.status,
