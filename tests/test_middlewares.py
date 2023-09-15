@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-import itertools
-import sys
 from weakref import WeakKeyDictionary
 
+import itertools
 import pytest
-from scrapy import Item, Request, Spider
+import sys
+from scrapy import Spider, Request, Item
 from scrapy.http import Response
 
-from sh_scrapy.middlewares import (HS_PARENT_ID_KEY, HS_REQUEST_ID_KEY,
-                                   HubstorageDownloaderMiddleware,
-                                   HubstorageSpiderMiddleware)
+from sh_scrapy.middlewares import (
+    HubstorageSpiderMiddleware, HubstorageDownloaderMiddleware,
+    HS_REQUEST_ID_KEY, HS_PARENT_ID_KEY
+)
 
 
 @pytest.fixture()
