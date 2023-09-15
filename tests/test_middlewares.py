@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
 import sys
-from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
 import pytest
@@ -82,6 +81,8 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
 
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middleware):
+    from dataclasses import dataclass
+
     @dataclass
     class DummyResponse:
         url: str
@@ -112,6 +113,8 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
 
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
+    from dataclasses import dataclass
+
     @dataclass
     class DummyResponse:
         url: str
