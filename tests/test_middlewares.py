@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
+import itertools
+from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
-import itertools
 import pytest
-from scrapy import Spider, Request, Item
+from scrapy import Item, Request, Spider
 from scrapy.http import Response
 
-from sh_scrapy.middlewares import (
-    HubstorageSpiderMiddleware, HubstorageDownloaderMiddleware,
-    HS_REQUEST_ID_KEY, HS_PARENT_ID_KEY
-)
+from sh_scrapy.middlewares import (HS_PARENT_ID_KEY, HS_REQUEST_ID_KEY,
+                                   HubstorageDownloaderMiddleware,
+                                   HubstorageSpiderMiddleware)
+
+
+@dataclass
+class DummyResponse:
+    url: str
 
 
 @pytest.fixture()
@@ -79,6 +84,31 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
 
+def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middleware):
+    spider = Spider('test')
+    url = 'http://resp-url'
+
+    # cleaning log file
+    hs_downloader_middleware.pipe_writer.open()
+
+    request = Request(url)
+    response_1 = DummyResponse(url)
+    response_2 = Response(url)
+    hs_downloader_middleware.process_request(request, spider)
+    hs_downloader_middleware.process_response(request, response_1, spider)
+
+    with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
+        assert tmp_file.readline() == ""
+    assert request.meta == {}
+
+    hs_downloader_middleware.process_response(request, response_2, spider)
+    with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
+        assert tmp_file.readline().startswith('REQ')
+
+    assert request.meta[HS_REQUEST_ID_KEY] == 0
+    assert request.meta[HS_PARENT_ID_KEY] is None
+
+
 def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     spider = Spider('test')
     url = 'http://resp-url'
@@ -112,3 +142,17 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
 
     assert request_1.meta[HS_REQUEST_ID_KEY] == 1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
+
+    request_2 = request_1.copy()
+    response_2_1 = DummyResponse(url)
+    response_2_2 = Response(url)
+
+    hs_downloader_middleware.process_response(request_2, response_2_1, spider)
+
+    assert request_2.meta[HS_REQUEST_ID_KEY] == 1
+    assert request_2.meta[HS_PARENT_ID_KEY] == 0
+
+    hs_downloader_middleware.process_response(request_2, response_2_2, spider)
+
+    assert request_2.meta[HS_REQUEST_ID_KEY] == 2
+    assert request_2.meta[HS_PARENT_ID_KEY] == 0
