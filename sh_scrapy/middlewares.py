@@ -62,7 +62,7 @@ class HubstorageDownloaderMiddleware(object):
     def process_response(self, request, response, spider):
         # This class of response check is intended to fix the bug described here
         # https://github.com/scrapy-plugins/scrapy-zyte-api/issues/112
-        if type(response).__name__ == "DummyResponse":
+        if type(response).__name__ == "DummyResponse" and type(response).__module__.startswith("scrapy_poet"):
             return response
 
         self.pipe_writer.write_request(
