@@ -88,7 +88,7 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     class DummyResponse(Response):
         __module__: str = "scrapy_poet.api"
 
-        def __init__(self, url: str, request=Optional[Request]):
+        def __init__(self, url: str, request: Optional[Request] = None):
             super().__init__(url=url, request=request)
 
     spider = Spider('test')
