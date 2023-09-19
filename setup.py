@@ -1,8 +1,11 @@
 from setuptools import setup, find_packages
 
+from sh_scrapy import __version__
+
+
 setup(
     name='scrapinghub-entrypoint-scrapy',
-    version='0.14.1',
+    version=__version__,
     license='BSD',
     description='Scrapy entrypoint for Scrapinghub job runner',
     long_description=open('README.md').read(),
