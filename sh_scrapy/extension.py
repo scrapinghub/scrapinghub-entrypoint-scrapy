@@ -42,10 +42,11 @@ class HubstorageExtension(object):
         self.crawler = crawler
         self.logger = logging.getLogger(__name__)
         self._write_item = self.pipe_writer.write_item
-        kwargs = {}
         if SCRAPY_VERSION_INFO < (2, 11):
-            kwargs["binary"] = False
-        self.exporter = PythonItemExporter(**kwargs)
+            with ignore_warnings(category=ScrapyDeprecationWarning):
+                self.exporter = PythonItemExporter(binary=False)
+        else:
+            self.exporter = PythonItemExporter()
 
     @classmethod
     def from_crawler(cls, crawler):
