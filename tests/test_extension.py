@@ -26,6 +26,7 @@ def test_hs_ext_init(hs_ext):
     assert hs_ext.crawler
     assert hs_ext._write_item == hs_ext.pipe_writer.write_item
     assert isinstance(hs_ext.exporter, PythonItemExporter)
+    assert hs_ext.exporter.export_item({"a": "b"}) == {"a": "b"}
 
 
 @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")

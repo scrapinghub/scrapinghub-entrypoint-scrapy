@@ -4,6 +4,7 @@ from weakref import WeakKeyDictionary
 
 import scrapy
 from scrapy import signals
+from scrapy import version_info as SCRAPY_VERSION_INFO
 from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
@@ -41,7 +42,10 @@ class HubstorageExtension(object):
         self.crawler = crawler
         self.logger = logging.getLogger(__name__)
         self._write_item = self.pipe_writer.write_item
-        self.exporter = PythonItemExporter()
+        kwargs = {}
+        if SCRAPY_VERSION_INFO < (2, 11):
+            kwargs["binary"] = False
+        self.exporter = PythonItemExporter(**kwargs)
 
     @classmethod
     def from_crawler(cls, crawler):
