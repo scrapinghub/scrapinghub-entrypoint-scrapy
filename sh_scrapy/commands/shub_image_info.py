@@ -39,11 +39,11 @@ class Command(ScrapyCommand):
             'spiders': sorted(self.crawler_process.spider_loader.list()),
         }
         try:
-            from scrapy_spider_metadata import get_metadata_for_spider
+            from scrapy_spider_metadata import get_spider_metadata
             result['metadata'] = {}
             for spider_name in result['spiders']:
                 spider_cls = self.crawler_process.spider_loader.load(spider_name)
-                metadata_dict = get_metadata_for_spider(spider_cls)
+                metadata_dict = get_spider_metadata(spider_cls)
                 try:
                     # make sure it's serializable
                     json.dumps(metadata_dict)
