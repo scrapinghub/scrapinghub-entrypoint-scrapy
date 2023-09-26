@@ -37,11 +37,10 @@ class Command(ScrapyCommand):
         result = {
             'project_type': 'scrapy',
             'spiders': sorted(self.crawler_process.spider_loader.list()),
-            'metadata': {},
         }
-        if sys.version_info >= (3, 8):
-            # scrapy-spider-metadata requires Python 3.8+
+        try:
             from scrapy_spider_metadata import get_metadata_for_spider
+            result['metadata'] = {}
             for spider_name in result['spiders']:
                 spider_cls = self.crawler_process.spider_loader.load(spider_name)
                 metadata_dict = get_metadata_for_spider(spider_cls)
@@ -50,7 +49,9 @@ class Command(ScrapyCommand):
                     json.dumps(metadata_dict)
                 except (TypeError, ValueError):
                     continue
-                result['metadata'] = metadata_dict
+                result['metadata'][spider_name] = metadata_dict
+        except ImportError:
+            pass
         if opts.debug:
             output = subprocess.check_output(
                 ['bash', '-c', self.IMAGE_INFO_CMD],
