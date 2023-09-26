@@ -19,6 +19,13 @@ from sh_scrapy.log import HubstorageLogHandler
 from tests.utils import create_project, call_command
 
 
+try:
+    from scrapy_spider_metadata import get_spider_metadata
+    SPIDER_METADATA_AVAILABLE = True
+except:
+    SPIDER_METADATA_AVAILABLE = False
+
+
 @mock.patch.dict(os.environ, {'HWORKER_SENTRY_DSN': 'hw-sentry-dsn',
                               'SENTRY_DSN': 'sentry-dsn'})
 def test_init_module():
@@ -288,13 +295,17 @@ def test_image_info(tmp_path):
     # can't be asserted as it contains a SHScrapyDeprecationWarning
     # assert err == ""
     data = json.loads(out)
-    assert data == {
+    expected = {
         "project_type": "scrapy",
         "spiders": ["myspider"],
         "metadata": {"myspider": {}},
     }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
 
 
+@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
 def test_image_info_metadata(tmp_path):
     project_dir = create_project(tmp_path, spider_text="""
 from scrapy import Spider
@@ -305,13 +316,15 @@ class MySpider(Spider):
 """)
     out, _ = call_command(project_dir, "shub-image-info")
     data = json.loads(out)
-    assert data == {
+    expected = {
         "project_type": "scrapy",
         "spiders": ["myspider"],
         "metadata": {"myspider": {"foo": 42}},
     }
+    assert data == expected
 
 
+@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
 def test_image_info_metadata_skip_broken(tmp_path):
     project_dir = create_project(tmp_path, spider_text="""
 from scrapy import Spider
@@ -322,8 +335,9 @@ class MySpider(Spider):
 """)
     out, _ = call_command(project_dir, "shub-image-info")
     data = json.loads(out)
-    assert data == {
+    expected = {
         "project_type": "scrapy",
         "spiders": ["myspider"],
         "metadata": {},
     }
+    assert data == expected
