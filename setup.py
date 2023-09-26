@@ -13,6 +13,7 @@ setup(
     install_requires=[
         'Scrapy>=1.6',
         'scrapinghub>=2.1.0',
+        'scrapy-spider-metadata; python_version >= "3.8"'
     ],
     entry_points={
         'console_scripts': [
