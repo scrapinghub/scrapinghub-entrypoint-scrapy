@@ -2,7 +2,6 @@
 from __future__ import print_function
 import json
 import subprocess
-import sys
 
 from scrapy.commands import ScrapyCommand
 
@@ -40,6 +39,9 @@ class Command(ScrapyCommand):
         }
         try:
             from scrapy_spider_metadata import get_spider_metadata
+        except ImportError:
+            pass
+        else:
             result['metadata'] = {}
             for spider_name in result['spiders']:
                 spider_cls = self.crawler_process.spider_loader.load(spider_name)
@@ -50,8 +52,6 @@ class Command(ScrapyCommand):
                 except (TypeError, ValueError):
                     continue
                 result['metadata'][spider_name] = metadata_dict
-        except ImportError:
-            pass
         if opts.debug:
             output = subprocess.check_output(
                 ['bash', '-c', self.IMAGE_INFO_CMD],
