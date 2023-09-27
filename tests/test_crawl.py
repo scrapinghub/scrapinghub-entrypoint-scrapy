@@ -305,7 +305,6 @@ def test_image_info(tmp_path):
     assert data == expected
 
 
-@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
 def test_image_info_metadata(tmp_path):
     project_dir = create_project(tmp_path, spider_text="""
 from scrapy import Spider
@@ -321,10 +320,11 @@ class MySpider(Spider):
         "spiders": ["myspider"],
         "metadata": {"myspider": {"foo": 42}},
     }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
     assert data == expected
 
 
-@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
 def test_image_info_metadata_skip_broken(tmp_path):
     project_dir = create_project(tmp_path, spider_text="""
 from scrapy import Spider
@@ -340,4 +340,6 @@ class MySpider(Spider):
         "spiders": ["myspider"],
         "metadata": {},
     }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
     assert data == expected
