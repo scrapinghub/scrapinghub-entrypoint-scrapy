@@ -35,8 +35,23 @@ class Command(ScrapyCommand):
     def run(self, args, opts):
         result = {
             'project_type': 'scrapy',
-            'spiders': sorted(self.crawler_process.spider_loader.list())
+            'spiders': sorted(self.crawler_process.spider_loader.list()),
         }
+        try:
+            from scrapy_spider_metadata import get_spider_metadata
+        except ImportError:
+            pass
+        else:
+            result['metadata'] = {}
+            for spider_name in result['spiders']:
+                spider_cls = self.crawler_process.spider_loader.load(spider_name)
+                metadata_dict = get_spider_metadata(spider_cls)
+                try:
+                    # make sure it's serializable
+                    json.dumps(metadata_dict)
+                except (TypeError, ValueError):
+                    continue
+                result['metadata'][spider_name] = metadata_dict
         if opts.debug:
             output = subprocess.check_output(
                 ['bash', '-c', self.IMAGE_INFO_CMD],

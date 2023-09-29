@@ -3,9 +3,7 @@ import sys
 import json
 import mock
 import pytest
-import warnings
 from scrapy.settings import Settings
-from scrapy.exceptions import ScrapyDeprecationWarning
 
 import sh_scrapy.crawl
 from sh_scrapy.crawl import _fatalerror
@@ -18,6 +16,14 @@ from sh_scrapy.crawl import _launch
 from sh_scrapy.crawl import list_spiders
 from sh_scrapy.crawl import main
 from sh_scrapy.log import HubstorageLogHandler
+from tests.utils import create_project, call_command
+
+
+try:
+    from scrapy_spider_metadata import get_spider_metadata
+    SPIDER_METADATA_AVAILABLE = True
+except:
+    SPIDER_METADATA_AVAILABLE = False
 
 
 @mock.patch.dict(os.environ, {'HWORKER_SENTRY_DSN': 'hw-sentry-dsn',
@@ -281,3 +287,59 @@ def test_main(mocked_launch, pipe_writer):
     # This ensures that pipe is writable even if main program is fininshed -
     # e.g. for threads that are not closed yet.
     assert not pipe_writer.close.called
+
+
+def test_image_info(tmp_path):
+    project_dir = create_project(tmp_path)
+    out, err = call_command(project_dir, "shub-image-info")
+    # can't be asserted as it contains a SHScrapyDeprecationWarning
+    # assert err == ""
+    data = json.loads(out)
+    expected = {
+        "project_type": "scrapy",
+        "spiders": ["myspider"],
+        "metadata": {"myspider": {}},
+    }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
+
+
+def test_image_info_metadata(tmp_path):
+    project_dir = create_project(tmp_path, spider_text="""
+from scrapy import Spider
+
+class MySpider(Spider):
+    name = "myspider"
+    metadata = {"foo": 42}
+""")
+    out, _ = call_command(project_dir, "shub-image-info")
+    data = json.loads(out)
+    expected = {
+        "project_type": "scrapy",
+        "spiders": ["myspider"],
+        "metadata": {"myspider": {"foo": 42}},
+    }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
+
+
+def test_image_info_metadata_skip_broken(tmp_path):
+    project_dir = create_project(tmp_path, spider_text="""
+from scrapy import Spider
+
+class MySpider(Spider):
+    name = "myspider"
+    metadata = {"foo": Spider}
+""")
+    out, _ = call_command(project_dir, "shub-image-info")
+    data = json.loads(out)
+    expected = {
+        "project_type": "scrapy",
+        "spiders": ["myspider"],
+        "metadata": {},
+    }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
