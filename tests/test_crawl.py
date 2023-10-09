@@ -343,3 +343,95 @@ class MySpider(Spider):
     if not SPIDER_METADATA_AVAILABLE:
         del expected["metadata"]
     assert data == expected
+
+
+@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
+def test_image_info_args(tmp_path):
+    project_dir = create_project(tmp_path, spider_text="""
+from enum import Enum
+from scrapy import Spider
+from scrapy_spider_metadata import Args
+from pydantic import BaseModel, Field
+
+class ToolEnum(Enum):
+    spanner = "spanner"
+    wrench = "wrench"
+
+class Parameters(BaseModel):
+    tool: ToolEnum = ToolEnum.spanner
+
+class MySpider(Args[Parameters], Spider):
+    name = "myspider"
+""")
+    out, _ = call_command(project_dir, "shub-image-info")
+    data = json.loads(out)
+    expected = {
+        "project_type": "scrapy",
+        "spiders": ["myspider"],
+        "metadata": {
+            "myspider": {
+                "param_schema": {
+                    "properties": {
+                        "tool": {
+                            "default": "spanner",
+                            "enum": ["spanner", "wrench"],
+                            "title": "Tool",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Parameters",
+                    "type": "object",
+                },
+            },
+        },
+    }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
+
+
+@pytest.mark.skipif(not SPIDER_METADATA_AVAILABLE, reason="scrapy-spider-metadata is not installed")
+def test_image_info_args_metadata(tmp_path):
+    project_dir = create_project(tmp_path, spider_text="""
+from enum import Enum
+from scrapy import Spider
+from scrapy_spider_metadata import Args
+from pydantic import BaseModel, Field
+
+class ToolEnum(Enum):
+    spanner = "spanner"
+    wrench = "wrench"
+
+class Parameters(BaseModel):
+    tool: ToolEnum = ToolEnum.spanner
+
+class MySpider(Args[Parameters], Spider):
+    name = "myspider"
+    metadata = {"foo": 42}
+""")
+    out, _ = call_command(project_dir, "shub-image-info")
+    data = json.loads(out)
+    expected = {
+        "project_type": "scrapy",
+        "spiders": ["myspider"],
+        "metadata": {
+            "myspider": {
+                "foo": 42,
+                "param_schema": {
+                    "properties": {
+                        "tool": {
+                            "default": "spanner",
+                            "enum": ["spanner", "wrench"],
+                            "title": "Tool",
+                            "type": "string",
+                        },
+                    },
+                    "title": "Parameters",
+                    "type": "object",
+                },
+            },
+        },
+    }
+    if not SPIDER_METADATA_AVAILABLE:
+        del expected["metadata"]
+    assert data == expected
