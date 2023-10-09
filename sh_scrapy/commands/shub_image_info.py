@@ -45,7 +45,7 @@ class Command(ScrapyCommand):
             result['metadata'] = {}
             for spider_name in result['spiders']:
                 spider_cls = self.crawler_process.spider_loader.load(spider_name)
-                metadata_dict = get_spider_metadata(spider_cls)
+                metadata_dict = get_spider_metadata(spider_cls, normalize=True)
                 try:
                     # make sure it's serializable
                     json.dumps(metadata_dict)
