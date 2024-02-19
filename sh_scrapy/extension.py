@@ -99,11 +99,6 @@ class HubstorageMiddleware:
             result._load_fingerprinter()
         return result
 
-    def __init__(self, crawler=None):
-        self._crawler = crawler
-        if crawler:
-            self._load_fingerprinter()
-
     def _load_fingerprinter(self):
         if hasattr(self._crawler, "request_fingerprinter"):
             self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
@@ -111,11 +106,14 @@ class HubstorageMiddleware:
             from scrapy.utils.request import request_fingerprint
             self._fingerprint = request_fingerprint
 
-    def __init__(self):
+    def __init__(self, crawler=None):
         self._seen = WeakKeyDictionary()
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
         self.request_id_sequence = request_id_sequence
+        self._crawler = crawler
+        if crawler:
+            self._load_fingerprinter()
 
     def process_spider_input(self, response, spider):
         self.pipe_writer.write_request(

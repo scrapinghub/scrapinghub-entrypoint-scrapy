@@ -5,6 +5,7 @@ import mock
 import pytest
 import scrapy
 from packaging import version
+from pytest import warns
 from scrapy import Spider
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request, Response
@@ -164,3 +165,20 @@ def test_custom_fingerprinter(monkeypatch):
     response.request = Request('http://req-url')
     mw.process_spider_input(response, Spider('test'))
     assert mw.pipe_writer.write_request.call_args[1]["fp"] == b"foo".hex()
+
+
+def test_subclassing():
+    class CustomHubstorageMiddleware(HubstorageMiddleware):
+        def __init__(self):
+            super().__init__()
+            self.foo = "bar"
+
+    crawler = get_crawler()
+    with warns(
+        DeprecationWarning,
+        match="must now accept a crawler parameter in their __init__ method",
+    ):
+        mw = CustomHubstorageMiddleware.from_crawler(crawler)
+
+    assert mw.foo == "bar"
+    assert hasattr(mw, "_fingerprint")
