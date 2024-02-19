@@ -3,11 +3,13 @@ from weakref import WeakKeyDictionary
 
 import mock
 import pytest
+import scrapy
+from packaging import version
+from pytest import warns
 from scrapy import Spider
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request, Response
 from scrapy.item import Item
-from scrapy.utils.request import request_fingerprint
 from scrapy.utils.test import get_crawler
 
 from sh_scrapy.extension import HubstorageExtension, HubstorageMiddleware
@@ -92,7 +94,8 @@ def test_hs_ext_spider_closed(hs_ext):
 @pytest.fixture
 def hs_mware(monkeypatch):
     monkeypatch.setattr('sh_scrapy.extension.pipe_writer', mock.Mock())
-    return HubstorageMiddleware()
+    crawler = get_crawler()
+    return HubstorageMiddleware.from_crawler(crawler)
 
 
 def test_hs_mware_init(hs_mware):
@@ -106,9 +109,13 @@ def test_hs_mware_process_spider_input(hs_mware):
     hs_mware.process_spider_input(response, Spider('test'))
     assert hs_mware.pipe_writer.write_request.call_count == 1
     args = hs_mware.pipe_writer.write_request.call_args[1]
+    if hasattr(hs_mware._crawler, "request_fingerprinter"):
+        fp = "1c735665b072000e11b0169081bce5bbaeac09a7"
+    else:
+        fp = "a001a1eb4537acdc8525edf1250065cab2657152"
     assert args == {
         'duration': 0,
-        'fp': request_fingerprint(response.request),
+        'fp': fp,
         'method': 'GET',
         'parent': None,
         'rs': 0,
@@ -138,3 +145,40 @@ def test_hs_mware_process_spider_output_filter_request(hs_mware):
     # make sure that we update hsparent meta only for requests
     assert result[0].meta.get(HS_PARENT_ID_KEY) is None
     assert result[1].meta[HS_PARENT_ID_KEY] == 'riq'
+
+
+@pytest.mark.skipif(
+    version.parse(scrapy.__version__) < version.parse("2.7"),
+    reason="Only Scrapy 2.7 and higher support centralized request fingerprints."
+)
+def test_custom_fingerprinter(monkeypatch):
+    monkeypatch.setattr('sh_scrapy.extension.pipe_writer', mock.Mock())
+
+    class CustomFingerprinter:
+        def fingerprint(self, request):
+            return b"foo"
+
+    crawler = get_crawler(settings_dict={"REQUEST_FINGERPRINTER_CLASS": CustomFingerprinter})
+    mw = HubstorageMiddleware.from_crawler(crawler)
+
+    response = Response('http://resp-url')
+    response.request = Request('http://req-url')
+    mw.process_spider_input(response, Spider('test'))
+    assert mw.pipe_writer.write_request.call_args[1]["fp"] == b"foo".hex()
+
+
+def test_subclassing():
+    class CustomHubstorageMiddleware(HubstorageMiddleware):
+        def __init__(self):
+            super().__init__()
+            self.foo = "bar"
+
+    crawler = get_crawler()
+    with warns(
+        DeprecationWarning,
+        match="must now accept a crawler parameter in their __init__ method",
+    ):
+        mw = CustomHubstorageMiddleware.from_crawler(crawler)
+
+    assert mw.foo == "bar"
+    assert hasattr(mw, "_fingerprint")

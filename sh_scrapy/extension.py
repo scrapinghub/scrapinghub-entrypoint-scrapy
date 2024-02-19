@@ -1,5 +1,6 @@
 import logging
 from contextlib import suppress
+from warnings import warn
 from weakref import WeakKeyDictionary
 
 import scrapy
@@ -9,7 +10,6 @@ from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.deprecate import create_deprecated_class
-from scrapy.utils.request import request_fingerprint
 
 from sh_scrapy import hsref
 from sh_scrapy.crawl import ignore_warnings
@@ -79,13 +79,41 @@ Please migrate to new middlewares.
 """
 
 
-class HubstorageMiddleware(object):
+class HubstorageMiddleware:
 
-    def __init__(self):
+    @classmethod
+    def from_crawler(cls, crawler):
+        try:
+            result = cls(crawler)
+        except TypeError:
+            warn(
+                (
+                    "Subclasses of HubstorageMiddleware must now accept a "
+                    "crawler parameter in their __init__ method. This will "
+                    "become an error in the future."
+                ),
+                DeprecationWarning,
+            )
+            result = cls()
+            result._crawler = crawler
+            result._load_fingerprinter()
+        return result
+
+    def _load_fingerprinter(self):
+        if hasattr(self._crawler, "request_fingerprinter"):
+            self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
+        else:
+            from scrapy.utils.request import request_fingerprint
+            self._fingerprint = request_fingerprint
+
+    def __init__(self, crawler=None):
         self._seen = WeakKeyDictionary()
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
         self.request_id_sequence = request_id_sequence
+        self._crawler = crawler
+        if crawler:
+            self._load_fingerprinter()
 
     def process_spider_input(self, response, spider):
         self.pipe_writer.write_request(
@@ -95,7 +123,7 @@ class HubstorageMiddleware(object):
             rs=len(response.body),
             duration=response.meta.get('download_latency', 0) * 1000,
             parent=response.meta.get(HS_PARENT_ID_KEY),
-            fp=request_fingerprint(response.request),
+            fp=self._fingerprint(response.request),
         )
         self._seen[response] = next(self.request_id_sequence)
 
