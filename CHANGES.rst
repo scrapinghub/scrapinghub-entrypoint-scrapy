@@ -2,7 +2,7 @@
 Changes
 =======
 
-0.17.2 (unreleased)
+0.17.2 (2024-02-20)
 ===================
 
 -   Added official support for Python 3.11 and 3.12.
