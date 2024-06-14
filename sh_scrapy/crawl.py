@@ -126,8 +126,8 @@ def _run_pkgscript(argv):
 
     def get_distribution():
         try:
-            import importlib.metadata as metadata
-            eps = metadata.entry_points(group='scrapy')
+            import importlib.metadata
+            eps = importlib.metadata.entry_points(group='scrapy')
         except ImportError:
             import pkg_resources
             eps = pkg_resources.WorkingSet().iter_entry_points('scrapy')
