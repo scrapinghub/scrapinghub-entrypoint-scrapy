@@ -2,6 +2,15 @@
 Changes
 =======
 
+0.17.3 (2024-06-NN)
+===================
+
+-   Replaced a use of the deprecated pkg_resources_ module with importlib_.
+
+    .. _pkg_resources: https://setuptools.pypa.io/en/latest/pkg_resources.html
+    .. _importlib: https://docs.python.org/3/library/importlib.html
+
+
 0.17.2 (2024-02-20)
 ===================
 
