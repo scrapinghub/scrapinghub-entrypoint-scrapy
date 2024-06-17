@@ -10,12 +10,6 @@ Changes
     .. _pkg_resources: https://setuptools.pypa.io/en/latest/pkg_resources.html
     .. _importlib: https://docs.python.org/3/library/importlib.html
 
--   Added support for centralized request fingerprints on Scrapy 2.7 and
-    higher.
-
--   Started this change log. Check `GitHub releases`_ for older releases until
-    0.12.0, and the `commit history`_ for the complete history.
-
 
 0.17.2 (2024-02-20)
 ===================
