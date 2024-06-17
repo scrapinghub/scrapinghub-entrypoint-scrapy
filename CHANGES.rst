@@ -2,7 +2,7 @@
 Changes
 =======
 
-0.17.3 (2024-06-NN)
+0.17.3 (2024-06-17)
 ===================
 
 -   Replaced a use of the deprecated pkg_resources_ module with importlib_.
