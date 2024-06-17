@@ -119,16 +119,23 @@ def _run_scrapy(argv, settings):
 
 
 def _run_pkgscript(argv):
-    import pkg_resources
     if argv[0].startswith('py:'):
         argv[0] = argv[0][3:]
     scriptname = argv[0]
     sys.argv = argv
 
     def get_distribution():
-        for ep in pkg_resources.WorkingSet().iter_entry_points('scrapy'):
+        try:
+            import importlib.metadata
+            eps = importlib.metadata.entry_points(group='scrapy')
+        except ImportError:
+            import pkg_resources
+            eps = pkg_resources.WorkingSet().iter_entry_points('scrapy')
+
+        for ep in eps:
             if ep.name == 'settings':
                 return ep.dist
+
     d = get_distribution()
     if not d:
         raise ValueError(SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND)
