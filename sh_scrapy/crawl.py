@@ -124,12 +124,17 @@ def _run_pkgscript(argv):
     scriptname = argv[0]
     sys.argv = argv
 
+    try:
+        import importlib.metadata
+        has_importlib = True
+    except ImportError:
+        import pkg_resources
+        has_importlib = False
+
     def get_distribution():
-        try:
-            import importlib.metadata
+        if has_importlib:
             eps = importlib.metadata.entry_points(group='scrapy')
-        except ImportError:
-            import pkg_resources
+        else:
             eps = pkg_resources.WorkingSet().iter_entry_points('scrapy')
 
         for ep in eps:
@@ -139,7 +144,25 @@ def _run_pkgscript(argv):
     d = get_distribution()
     if not d:
         raise ValueError(SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND)
-    d.run_script(scriptname, {'__name__': '__main__'})
+    ns = {"__name__": "__main__"}
+    if has_importlib:
+        _run_script(d, scriptname, ns)
+    else:
+        d.run_script(scriptname, ns)
+
+
+def _run_script(dist, script_name, namespace):
+    # an importlib-based replacement for pkg_resources.NullProvider.run_script()
+    script = "scripts/" + script_name
+    source = dist.read_text(script)
+    if not source:
+        raise ValueError(
+            f"Script {script!r} not found in metadata at {dist._path!r}"
+        )
+    script_filename = dist._path.joinpath(script)
+    code = compile(source, str(script_filename), "exec")
+    exec(code, namespace, namespace)
+
 
 
 def _run_usercode(spider, args, apisettings_func,
