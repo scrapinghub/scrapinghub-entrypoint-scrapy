@@ -2,7 +2,7 @@
 Changes
 =======
 
-0.17.4 (YYYY-MM-DD)
+0.17.4 (2024-07-08)
 ===================
 
 -   Fixed an exception when running scripts with importlib_ installed,
