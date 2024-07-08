@@ -2,6 +2,13 @@
 Changes
 =======
 
+0.17.4 (YYYY-MM-DD)
+===================
+
+-   Fixed an exception when running scripts with importlib_ installed,
+    introduced in 0.17.3.
+
+
 0.17.3 (2024-06-17)
 ===================
 
