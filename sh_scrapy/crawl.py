@@ -152,7 +152,12 @@ def _run_pkgscript(argv):
 
 
 def _run_script(dist, script_name, namespace):
-    # an importlib-based replacement for pkg_resources.NullProvider.run_script()
+    # An importlib-based replacement for pkg_resources.NullProvider.run_script().
+    # It's possible that this doesn't support all cases that pkg_resources does,
+    # so it may need to be improved when those are discovered.
+    # Using a private attribute (dist._path) seems to be necessary to get the
+    # full file path, but it's only needed for diagnostic messages so it should
+    # be easy to fix this by moving to relative paths if this API is removed.
     script = "scripts/" + script_name
     source = dist.read_text(script)
     if not source:
