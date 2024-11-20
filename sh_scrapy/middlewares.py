@@ -3,7 +3,6 @@ import itertools
 from weakref import WeakKeyDictionary
 
 from scrapy import Request
-from scrapy.utils.request import request_fingerprint
 
 from sh_scrapy.writer import pipe_writer
 
@@ -35,7 +34,7 @@ class HubstorageSpiderMiddleware(object):
             yield x
 
 
-class HubstorageDownloaderMiddleware(object):
+class HubstorageDownloaderMiddleware():
     """Hubstorage dowloader middleware.
     
     What it does:
@@ -46,10 +45,37 @@ class HubstorageDownloaderMiddleware(object):
     
     """
 
-    def __init__(self):
+    @classmethod
+    def from_crawler(cls, crawler):
+        try:
+            result = cls(crawler)
+        except TypeError:
+            warn(
+                (
+                    "Subclasses of HubstorageDownloaderMiddleware must now "
+                    "accept a crawler parameter in their __init__ method. "
+                    "This will become an error in the future."
+                ),
+                DeprecationWarning,
+            )
+            result = cls()
+            result._crawler = crawler
+            result._load_fingerprinter()
+        return result
+
+    def __init__(self, crawler):
+        self._crawler = crawler
         self._seen_requests = seen_requests
         self.pipe_writer = pipe_writer
         self.request_id_sequence = request_id_sequence
+        self._load_fingerprinter()
+
+    def _load_fingerprinter(self):
+        if hasattr(self._crawler, "request_fingerprinter"):
+            self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
+        else:
+            from scrapy.utils.request import request_fingerprint
+            self._fingerprint = request_fingerprint
 
     def process_request(self, request, spider):
         # Check if request id is set, which usually happens for retries or redirects because
@@ -72,7 +98,7 @@ class HubstorageDownloaderMiddleware(object):
             rs=len(response.body),
             duration=request.meta.get('download_latency', 0) * 1000,
             parent=request.meta.setdefault(HS_PARENT_ID_KEY),
-            fp=request_fingerprint(request),
+            fp=self._fingerprint(response.request),
         )
         # Generate and set request id.
         request_id = next(self.request_id_sequence)
