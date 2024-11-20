@@ -34,7 +34,7 @@ class HubstorageSpiderMiddleware(object):
             yield x
 
 
-class HubstorageDownloaderMiddleware():
+class HubstorageDownloaderMiddleware:
     """Hubstorage dowloader middleware.
     
     What it does:
