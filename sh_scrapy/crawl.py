@@ -169,14 +169,14 @@ def _run_script(dist, script_name, namespace):
     exec(code, namespace, namespace)
 
 
-
 def _run_usercode(spider, args, apisettings_func,
                   log_handler=None, commands_module=None):
     try:
         from scrapy.exceptions import ScrapyDeprecationWarning
         from sh_scrapy.settings import populate_settings
 
-        with ignore_warnings(category=ScrapyDeprecationWarning):
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ScrapyDeprecationWarning)
             settings = populate_settings(apisettings_func(), spider)
         if commands_module:
             settings.set('COMMANDS_MODULE', commands_module, priority=40)
