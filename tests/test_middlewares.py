@@ -5,6 +5,7 @@ import pytest
 import sys
 from scrapy import Spider, Request, Item
 from scrapy.http import Response
+from scrapy.utils.test import get_crawler
 from typing import Optional
 
 from sh_scrapy.middlewares import (
@@ -26,7 +27,8 @@ def hs_spider_middleware(monkeypatch_globals):
 
 @pytest.fixture()
 def hs_downloader_middleware(monkeypatch_globals):
-    return HubstorageDownloaderMiddleware()
+    crawler = get_crawler()
+    return HubstorageDownloaderMiddleware.from_crawler(crawler)
 
 
 def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
@@ -46,13 +48,13 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert len(hs_spider_middleware._seen_requests) == 0
     assert len(hs_downloader_middleware._seen_requests) == 0
 
+    response_0.request = request_0
     hs_downloader_middleware.process_response(request_0, response_0, spider)
 
     assert request_0.meta[HS_REQUEST_ID_KEY] == 0
     assert request_0.meta[HS_PARENT_ID_KEY] is None
     assert hs_spider_middleware._seen_requests[request_0] == 0
 
-    response_0.request = request_0
     request_1 = Request(url)
     request_2 = Request(url)
     item1 = {}
@@ -69,12 +71,14 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
 
     response_1 = Response(url)
     hs_downloader_middleware.process_request(request_1, spider)
+    response_1.request = request_1
     hs_downloader_middleware.process_response(request_1, response_1, spider)
     assert request_1.meta[HS_REQUEST_ID_KEY] == 1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
 
     response_2 = Response(url)
     hs_downloader_middleware.process_request(request_2, spider)
+    response_2.request = request_2
     hs_downloader_middleware.process_response(request_2, response_2, spider)
     assert request_2.meta[HS_REQUEST_ID_KEY] == 2
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
@@ -101,12 +105,14 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     response_1 = DummyResponse(url, request)
     response_2 = Response(url)
     hs_downloader_middleware.process_request(request, spider)
+    response_1.request = request
     hs_downloader_middleware.process_response(request, response_1, spider)
 
     with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
         assert tmp_file.readline() == ""
     assert request.meta == {}
 
+    response_2.request = request
     hs_downloader_middleware.process_response(request, response_2, spider)
     with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
         assert tmp_file.readline().startswith('REQ')
@@ -138,6 +144,7 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     assert len(hs_spider_middleware._seen_requests) == 0
     assert len(hs_downloader_middleware._seen_requests) == 0
 
+    response_0.request = request_0
     hs_downloader_middleware.process_response(request_0, response_0, spider)
 
     assert request_0.meta[HS_REQUEST_ID_KEY] == 0
@@ -154,6 +161,7 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     assert HS_REQUEST_ID_KEY not in request_1.meta
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
 
+    response_1.request = request_1
     hs_downloader_middleware.process_response(request_1, response_1, spider)
 
     assert request_1.meta[HS_REQUEST_ID_KEY] == 1
@@ -163,11 +171,13 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     response_2_1 = DummyResponse(url, request_2)
     response_2_2 = Response(url)
 
+    response_2_1.request = request_2
     hs_downloader_middleware.process_response(request_2, response_2_1, spider)
 
     assert request_2.meta[HS_REQUEST_ID_KEY] == 1
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
+    response_2_2.request = request_2
     hs_downloader_middleware.process_response(request_2, response_2_2, spider)
 
     assert request_2.meta[HS_REQUEST_ID_KEY] == 2
