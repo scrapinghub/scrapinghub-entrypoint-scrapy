@@ -6,13 +6,11 @@ from weakref import WeakKeyDictionary
 import scrapy
 from scrapy import signals
 from scrapy import version_info as SCRAPY_VERSION_INFO
-from scrapy.exceptions import ScrapyDeprecationWarning
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
 from scrapy.utils.deprecate import create_deprecated_class
 
 from sh_scrapy import hsref
-from sh_scrapy.crawl import ignore_warnings
 from sh_scrapy.exceptions import SHScrapyDeprecationWarning
 from sh_scrapy.middlewares import HS_PARENT_ID_KEY, request_id_sequence
 from sh_scrapy.writer import pipe_writer
