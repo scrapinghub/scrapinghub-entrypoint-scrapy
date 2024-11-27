@@ -98,7 +98,7 @@ class HubstorageDownloaderMiddleware:
             rs=len(response.body),
             duration=request.meta.get('download_latency', 0) * 1000,
             parent=request.meta.setdefault(HS_PARENT_ID_KEY),
-            fp=self._fingerprint(response.request),
+            fp=self._fingerprint(request),
         )
         # Generate and set request id.
         request_id = next(self.request_id_sequence)
