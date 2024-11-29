@@ -3,6 +3,7 @@
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
 from __future__ import print_function
+import importlib.metadata
 import os
 import sys
 import socket
@@ -124,19 +125,9 @@ def _run_pkgscript(argv):
     scriptname = argv[0]
     sys.argv = argv
 
-    try:
-        import importlib.metadata
-        has_importlib = True
-    except ImportError:
-        import pkg_resources
-        has_importlib = False
 
-    def get_distribution():
-        if has_importlib:
-            eps = importlib.metadata.entry_points(group='scrapy')
-        else:
-            eps = pkg_resources.WorkingSet().iter_entry_points('scrapy')
-
+    def get_distribution() -> importlib.metadata.Distribution:
+        eps = importlib.metadata.entry_points(group='scrapy')
         for ep in eps:
             if ep.name == 'settings':
                 return ep.dist
@@ -145,13 +136,10 @@ def _run_pkgscript(argv):
     if not d:
         raise ValueError(SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND)
     ns = {"__name__": "__main__"}
-    if has_importlib:
-        _run_script(d, scriptname, ns)
-    else:
-        d.run_script(scriptname, ns)
+    _run_script(d, scriptname, ns)
 
 
-def _run_script(dist, script_name, namespace):
+def _run_script(dist: importlib.metadata.Distribution, script_name: str, namespace: dict):
     # An importlib-based replacement for pkg_resources.NullProvider.run_script().
     # It's possible that this doesn't support all cases that pkg_resources does,
     # so it may need to be improved when those are discovered.
