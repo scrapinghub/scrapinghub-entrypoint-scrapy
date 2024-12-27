@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
+from warnings import warn
 from weakref import WeakKeyDictionary
 
 from scrapy import Request
@@ -28,10 +29,21 @@ class HubstorageSpiderMiddleware(object):
         parent = self._seen_requests.pop(response.request, None)
         for x in result:
             if isinstance(x, Request):
-                x.meta[HS_PARENT_ID_KEY] = parent
-                # Remove request id if it was for some reason set in the request coming from Spider.
-                x.meta.pop(HS_REQUEST_ID_KEY, None)
+                self._process_request(x, parent)
             yield x
+
+    async def process_spider_output_async(self, response, result, spider):
+        parent = self._seen_requests.pop(response.request, None)
+        async for x in result:
+            if isinstance(x, Request):
+                self._process_request(x, parent)
+            yield x
+
+
+    def _process_request(self, request, parent):
+        request.meta[HS_PARENT_ID_KEY] = parent
+        # Remove request id if it was for some reason set in the request coming from Spider.
+        request.meta.pop(HS_REQUEST_ID_KEY, None)
 
 
 class HubstorageDownloaderMiddleware:
