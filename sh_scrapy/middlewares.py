@@ -39,7 +39,6 @@ class HubstorageSpiderMiddleware(object):
                 self._process_request(x, parent)
             yield x
 
-
     def _process_request(self, request, parent):
         request.meta[HS_PARENT_ID_KEY] = parent
         # Remove request id if it was for some reason set in the request coming from Spider.
