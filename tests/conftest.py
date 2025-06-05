@@ -33,3 +33,7 @@ def set_jobkeyenvironment(monkeypatch):
     monkeypatch.setenv('SCRAPY_JOB', '1/2/3')
     monkeypatch.setenv('SHUB_JOBAUTH', TEST_AUTH)
     monkeypatch.setenv('SHUB_STORAGE', 'storage-url')
+
+
+# install the reactor explicitly, as Scrapy including scrapy.utils.test.get_crawler() assumes it's installed
+from twisted.internet import reactor
