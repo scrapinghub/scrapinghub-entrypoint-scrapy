@@ -6,7 +6,7 @@ import pytest
 import scrapy
 from packaging import version
 from pytest import warns
-from scrapy import Spider
+from scrapy import Spider, version_info as SCRAPY_VERSION_INFO
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request, Response
 from scrapy.item import Item
@@ -31,7 +31,7 @@ def test_hs_ext_init(hs_ext):
     assert hs_ext.exporter.export_item({"a": "b"}) == {"a": "b"}
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
+@pytest.mark.skipif(SCRAPY_VERSION_INFO < (2, 2, 0), reason="Requires Scrapy>=2.2")
 def test_hs_ext_dataclass_item_scraped(hs_ext):
     from dataclasses import dataclass
 
@@ -47,6 +47,7 @@ def test_hs_ext_dataclass_item_scraped(hs_ext):
     assert hs_ext._write_item.call_args[0] == ({'_type': 'DataclassItem'},)
 
 
+@pytest.mark.skipif(SCRAPY_VERSION_INFO < (2, 2, 0), reason="Requires Scrapy>=2.2")
 def test_hs_ext_attrs_item_scraped(hs_ext):
     try:
         import attr
