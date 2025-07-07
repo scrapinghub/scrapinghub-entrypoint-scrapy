@@ -19,27 +19,27 @@ jobs:
           env:
             TOXENV: py
         - python-version: "3.8"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.9"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.10"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.11"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.12"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.13"
-          os: ubuntu-latest
+          os: ubuntu-24.04
           env:
             TOXENV: py
 
