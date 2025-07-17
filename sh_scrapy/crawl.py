@@ -3,13 +3,18 @@
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
 from __future__ import print_function
-import os
-import sys
-import socket
-import logging
 import datetime
+import logging
+import os
+import socket
+import sys
+import sysconfig
 import warnings
 from contextlib import contextmanager
+from importlib.metadata import PathDistribution
+from pathlib import Path
+from typing import Tuple
+
 # XXX: Do not use atexit to close Hubstorage client!
 # why: functions registed with atexit are called when run_script() finishes,
 # and at that point main() function doesn't completed leading to lost log
@@ -151,20 +156,38 @@ def _run_pkgscript(argv):
         d.run_script(scriptname, ns)
 
 
-def _run_script(dist, script_name, namespace):
+def _get_script_code_and_path(dist: PathDistribution, script_name: str) -> Tuple[str, str]:
+    """Get the code and absolute path of a script from the distribution metadata.
+    If not found in the distribution, look for it in the scripts directory.
+    """
+    script = "scripts/" + script_name
+    source = dist.read_text(script)
+    if source:
+        script_filename = dist._path.joinpath(script)
+        return source, str(script_filename)
+
+    # fallback: find script in the scripts directory
+    scripts_dir = Path(sysconfig.get_path("scripts"))
+    script_path = scripts_dir / script_name
+    if script_path.exists():
+        source = script_path.read_text()
+        return source, str(script_path.absolute())
+
+    return None, None
+
+
+def _run_script(dist: PathDistribution, script_name: str, namespace: dict) -> None:
     # An importlib-based replacement for pkg_resources.NullProvider.run_script().
     # It's possible that this doesn't support all cases that pkg_resources does,
     # so it may need to be improved when those are discovered.
     # Using a private attribute (dist._path) seems to be necessary to get the
     # full file path, but it's only needed for diagnostic messages so it should
     # be easy to fix this by moving to relative paths if this API is removed.
-    script = "scripts/" + script_name
-    source = dist.read_text(script)
-    if not source:
+    source, script_filename = _get_script_code_and_path(dist, script_name)
+    if source is None:
         raise ValueError(
-            f"Script {script!r} not found in metadata at {dist._path!r}"
+            f"Script {script_name!r} not found in metadata at {dist._path!r}"
         )
-    script_filename = dist._path.joinpath(script)
     code = compile(source, str(script_filename), "exec")
     exec(code, namespace, namespace)
 
