@@ -11,8 +11,6 @@ from scrapy.utils.python import to_unicode
 
 logger = logging.getLogger(__name__)
 REPLACE_ADDONS_PATHS = {
-    "hworker.bot.ext.page.PageStorageMiddleware":
-        "scrapy_pagestorage.PageStorageMiddleware",
     "hworker.bot.ext.persistence.DotScrapyPersistence":
         "scrapy_dotpersistence.DotScrapyPersistence",
     "scrapylib.deltafetch.DeltaFetch":
