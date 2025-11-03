@@ -4,8 +4,10 @@
 # -----------------------------------------------------------------------
 from __future__ import print_function
 import datetime
+import json
 import logging
 import os
+import runpy
 import socket
 import sys
 import sysconfig
@@ -188,8 +190,41 @@ def _run_script(dist: PathDistribution, script_name: str, namespace: dict) -> No
         raise ValueError(
             f"Script {script_name!r} not found in metadata at {dist._path!r}"
         )
-    code = compile(source, str(script_filename), "exec")
-    exec(code, namespace, namespace)
+    try:
+        code = compile(source, str(script_filename), "exec")
+        exec(code, namespace, namespace)
+    except Exception as ex:
+        # avoid importing pkg_resources to prevent warnings
+        if getattr(ex, "__module__", "") == "pkg_resources" and ex.__class__.__name__ == "ResolutionError":
+            _run_script_fallback(dist, script_name)
+        else:
+            raise
+
+def _run_script_fallback(dist: PathDistribution, script_name: str) -> None:
+    """Lookup the actual script under the project's location on disk.
+    This is a fallback for when the distribution metadata cannot be read, e.g.
+    when installed in editable mode.
+    """
+    dist_info_dir = Path(dist._path).resolve()
+    project_root = dist_info_dir.parent
+
+    # recover the source path from direct_url.json (editable installs)
+    direct_url = dist_info_dir / "direct_url.json"
+    if direct_url.exists():
+        data = json.loads(direct_url.read_text())
+        url = data.get("url")
+        if url and url.startswith("file://"):
+            project_root = Path(url[7:]).resolve()
+
+    # search for the script
+    scripts = list(project_root.rglob(script_name))
+    if not scripts:
+        raise FileNotFoundError(
+            f"Could not locate fallback script {script_name!r} under {project_root}"
+        )
+
+    # execute first script whose name matches
+    runpy.run_path(scripts[0], run_name="__main__")
 
 
 def _run_usercode(spider, args, apisettings_func,
