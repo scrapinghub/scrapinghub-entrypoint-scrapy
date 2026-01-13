@@ -3,9 +3,13 @@ import itertools
 from warnings import warn
 from weakref import WeakKeyDictionary
 
-from scrapy import Request
+from scrapy import Spider
+from scrapy.crawler import Crawler
+from scrapy.http import Request, Response
 
+from sh_scrapy import _SCRAPY_ASYNC_API
 from sh_scrapy.writer import pipe_writer
+
 
 HS_REQUEST_ID_KEY = '_hsid'
 HS_PARENT_ID_KEY = '_hsparent'
@@ -13,13 +17,13 @@ request_id_sequence = itertools.count()
 seen_requests = WeakKeyDictionary()
 
 
-class HubstorageSpiderMiddleware(object):
+class HubstorageSpiderMiddleware:
     """Hubstorage spider middleware.
-    
+
     What it does:
-    
+
     - Sets parent request ids to the requests coming out of the spider.
-    
+
     """
 
     def __init__(self):
@@ -47,17 +51,17 @@ class HubstorageSpiderMiddleware(object):
 
 class HubstorageDownloaderMiddleware:
     """Hubstorage dowloader middleware.
-    
+
     What it does:
-    
+
     - Generates request ids for all downloaded requests.
     - Sets parent request ids for requests generated in downloader middlewares.
     - Stores all downloaded requests into Hubstorage.
-    
+
     """
 
     @classmethod
-    def from_crawler(cls, crawler):
+    def from_crawler(cls, crawler: Crawler) -> "HubstorageDownloaderMiddleware":
         try:
             result = cls(crawler)
         except TypeError:
@@ -74,21 +78,37 @@ class HubstorageDownloaderMiddleware:
             result._load_fingerprinter()
         return result
 
-    def __init__(self, crawler):
+    def __init__(self, crawler: Crawler) -> None:
         self._crawler = crawler
         self._seen_requests = seen_requests
         self.pipe_writer = pipe_writer
         self.request_id_sequence = request_id_sequence
         self._load_fingerprinter()
 
-    def _load_fingerprinter(self):
+    def _load_fingerprinter(self) -> None:
         if hasattr(self._crawler, "request_fingerprinter"):
             self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
         else:
             from scrapy.utils.request import request_fingerprint
             self._fingerprint = request_fingerprint
 
-    def process_request(self, request, spider):
+    if _SCRAPY_ASYNC_API:
+
+        async def process_request(self, request: Request) -> None:
+            return self._process_request(request)
+
+        async def process_response(self, request: Request, response: Response) -> Response:
+            return self._process_response(request, response)
+
+    else:
+
+        def process_request(self, request: Request, spider: Spider) -> None:
+            return self._process_request(request)
+
+        def process_response(self, request: Request, response: Response, spider: Spider) -> Response:
+            return self._process_response(request, response)
+
+    def _process_request(self, request: Request) -> None:
         # Check if request id is set, which usually happens for retries or redirects because
         # those requests are usually copied from the original one.
         request_id = request.meta.pop(HS_REQUEST_ID_KEY, None)
@@ -96,7 +116,7 @@ class HubstorageDownloaderMiddleware:
             # Set original request id or None as a parent request id.
             request.meta[HS_PARENT_ID_KEY] = request_id
 
-    def process_response(self, request, response, spider):
+    def _process_response(self, request: Request, response: Response) -> Response:
         # This class of response check is intended to fix the bug described here
         # https://github.com/scrapy-plugins/scrapy-zyte-api/issues/112
         if type(response).__name__ == "DummyResponse" and type(response).__module__.startswith("scrapy_poet"):
