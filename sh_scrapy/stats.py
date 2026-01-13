@@ -45,5 +45,7 @@ class HubStorageStatsCollector(StatsCollector):
         def open_spider(self, spider: Optional[Spider] = None) -> None:
             self._setup_looping_call(now=True)
 
-        def close_spider(self, spider: Optional[Spider] = None, reason: Optional[str] = None) -> None:
+        def close_spider(
+            self, spider: Optional[Spider] = None, reason: Optional[str] = None
+        ) -> None:
             self._close_spider(spider=spider, reason=reason)
