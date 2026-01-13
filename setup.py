@@ -19,7 +19,7 @@ setup(
             'shub-image-info = sh_scrapy.crawl:shub_image_info',
         ],
     },
-    python_requires='>=3.9',
+    python_requires='>=3.10',
     classifiers=[
         'Framework :: Scrapy',
         'Development Status :: 5 - Production/Stable',
@@ -28,11 +28,11 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Topic :: Utilities',
     ],
 )
