@@ -3,6 +3,7 @@ import pytest
 from scrapy.utils.test import get_crawler
 from scrapy.exceptions import NotConfigured
 
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.diskquota import DiskQuota
 from sh_scrapy.diskquota import DiskQuotaDownloaderMiddleware
 from sh_scrapy.diskquota import DiskQuotaSpiderMiddleware
@@ -43,7 +44,10 @@ def test_disk_quota_check_error(crawler):
 def test_downloaded_mware_process_not_stopped(crawler):
     crawler.engine = mock.Mock()
     mware = DiskQuotaDownloaderMiddleware(crawler)
-    mware.process_exception('request', ValueError(), 'spider')
+    if _SCRAPY_NO_SPIDER_ARG:
+        mware.process_exception('request', ValueError())
+    else:
+        mware.process_exception('request', ValueError(), 'spider')
     assert not crawler.engine.close_spider.called
 
 
@@ -52,16 +56,24 @@ def test_downloaded_mware_process_stopped(crawler):
     mware = DiskQuotaDownloaderMiddleware(crawler)
     error = IOError()
     error.errno = 122
-    mware.process_exception('request', error, 'spider')
+    if _SCRAPY_NO_SPIDER_ARG:
+        mware.process_exception('request', error)
+    else:
+        mware.process_exception('request', error, 'spider')
     assert crawler.engine.close_spider.called
-    assert crawler.engine.close_spider.call_args[0] == (
-        'spider', 'diskusage_exceeded')
+    if _SCRAPY_NO_SPIDER_ARG:
+        assert crawler.engine.close_spider.call_args[1] == {'reason': 'diskusage_exceeded'}
+    else:
+        assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')
 
 
 def test_spider_mware_process_not_stopped(crawler):
     crawler.engine = mock.Mock()
     mware = DiskQuotaSpiderMiddleware(crawler)
-    mware.process_spider_exception('response', ValueError(), 'spider')
+    if _SCRAPY_NO_SPIDER_ARG:
+        mware.process_spider_exception('response', ValueError())
+    else:
+        mware.process_spider_exception('response', ValueError(), 'spider')
     assert not crawler.engine.close_spider.called
 
 
@@ -70,7 +82,12 @@ def test_spider_mware_process_stopped(crawler):
     mware = DiskQuotaSpiderMiddleware(crawler)
     error = IOError()
     error.errno = 122
-    mware.process_spider_exception('response', error, 'spider')
+    if _SCRAPY_NO_SPIDER_ARG:
+        mware.process_spider_exception('response', error)
+    else:
+        mware.process_spider_exception('response', error, 'spider')
     assert crawler.engine.close_spider.called
-    assert crawler.engine.close_spider.call_args[0] == (
-        'spider', 'diskusage_exceeded')
+    if _SCRAPY_NO_SPIDER_ARG:
+        assert crawler.engine.close_spider.call_args[0] == (None, 'diskusage_exceeded')
+    else:
+        assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')

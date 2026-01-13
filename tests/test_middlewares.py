@@ -8,6 +8,7 @@ from scrapy.http import Response
 from scrapy.utils.test import get_crawler
 from typing import Optional
 
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.middlewares import (
     HubstorageSpiderMiddleware, HubstorageDownloaderMiddleware,
     HS_REQUEST_ID_KEY, HS_PARENT_ID_KEY
@@ -41,14 +42,20 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     request_0 = Request(url)
     response_0 = Response(url)
 
-    hs_downloader_middleware.process_request(request_0, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request_0)
+    else:
+        hs_downloader_middleware.process_request(request_0, spider)
 
     assert HS_REQUEST_ID_KEY not in request_0.meta
     assert HS_PARENT_ID_KEY not in request_0.meta
     assert len(hs_spider_middleware._seen_requests) == 0
     assert len(hs_downloader_middleware._seen_requests) == 0
 
-    hs_downloader_middleware.process_response(request_0, response_0, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request_0, response_0)
+    else:
+        hs_downloader_middleware.process_response(request_0, response_0, spider)
 
     assert request_0.meta[HS_REQUEST_ID_KEY] == 0
     assert request_0.meta[HS_PARENT_ID_KEY] is None
@@ -60,7 +67,10 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     item1 = {}
     item2 = Item()
     output = [request_1, request_2, item1, item2]
-    processed_output = list(hs_spider_middleware.process_spider_output(response_0, output, spider))
+    if _SCRAPY_NO_SPIDER_ARG:
+        processed_output = list(hs_spider_middleware.process_spider_output(response_0, output))
+    else:
+        processed_output = list(hs_spider_middleware.process_spider_output(response_0, output, spider))
 
     assert processed_output[0] is request_1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
@@ -70,14 +80,22 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert processed_output[3] is item2
 
     response_1 = Response(url)
-    hs_downloader_middleware.process_request(request_1, spider)
-    hs_downloader_middleware.process_response(request_1, response_1, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request_1)
+        hs_downloader_middleware.process_response(request_1, response_1)
+    else:
+        hs_downloader_middleware.process_request(request_1, spider)
+        hs_downloader_middleware.process_response(request_1, response_1, spider)
     assert request_1.meta[HS_REQUEST_ID_KEY] == 1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
 
     response_2 = Response(url)
-    hs_downloader_middleware.process_request(request_2, spider)
-    hs_downloader_middleware.process_response(request_2, response_2, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request_2)
+        hs_downloader_middleware.process_response(request_2, response_2)
+    else:
+        hs_downloader_middleware.process_request(request_2, spider)
+        hs_downloader_middleware.process_response(request_2, response_2, spider)
     assert request_2.meta[HS_REQUEST_ID_KEY] == 2
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
@@ -102,14 +120,21 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     request = Request(url)
     response_1 = DummyResponse(url, request)
     response_2 = Response(url)
-    hs_downloader_middleware.process_request(request, spider)
-    hs_downloader_middleware.process_response(request, response_1, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request)
+        hs_downloader_middleware.process_response(request, response_1)
+    else:
+        hs_downloader_middleware.process_request(request, spider)
+        hs_downloader_middleware.process_response(request, response_1, spider)
 
     with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
         assert tmp_file.readline() == ""
     assert request.meta == {}
 
-    hs_downloader_middleware.process_response(request, response_2, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request, response_2)
+    else:
+        hs_downloader_middleware.process_response(request, response_2, spider)
     with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
         assert tmp_file.readline().startswith('REQ')
 
@@ -133,14 +158,20 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     request_0 = Request(url)
     response_0 = Response(url)
 
-    hs_downloader_middleware.process_request(request_0, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request_0)
+    else:
+        hs_downloader_middleware.process_request(request_0, spider)
 
     assert HS_REQUEST_ID_KEY not in request_0.meta
     assert HS_PARENT_ID_KEY not in request_0.meta
     assert len(hs_spider_middleware._seen_requests) == 0
     assert len(hs_downloader_middleware._seen_requests) == 0
 
-    hs_downloader_middleware.process_response(request_0, response_0, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request_0, response_0)
+    else:
+        hs_downloader_middleware.process_response(request_0, response_0, spider)
 
     assert request_0.meta[HS_REQUEST_ID_KEY] == 0
     assert request_0.meta[HS_PARENT_ID_KEY] is None
@@ -151,12 +182,18 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     assert request_1.meta[HS_REQUEST_ID_KEY] == 0
     assert request_1.meta[HS_PARENT_ID_KEY] is None
 
-    hs_downloader_middleware.process_request(request_1, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_request(request_1)
+    else:
+        hs_downloader_middleware.process_request(request_1, spider)
 
     assert HS_REQUEST_ID_KEY not in request_1.meta
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
 
-    hs_downloader_middleware.process_response(request_1, response_1, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request_1, response_1)
+    else:
+        hs_downloader_middleware.process_response(request_1, response_1, spider)
 
     assert request_1.meta[HS_REQUEST_ID_KEY] == 1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
@@ -165,12 +202,18 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     response_2_1 = DummyResponse(url, request_2)
     response_2_2 = Response(url)
 
-    hs_downloader_middleware.process_response(request_2, response_2_1, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request_2, response_2_1)
+    else:
+        hs_downloader_middleware.process_response(request_2, response_2_1, spider)
 
     assert request_2.meta[HS_REQUEST_ID_KEY] == 1
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
-    hs_downloader_middleware.process_response(request_2, response_2_2, spider)
+    if _SCRAPY_NO_SPIDER_ARG:
+        hs_downloader_middleware.process_response(request_2, response_2_2)
+    else:
+        hs_downloader_middleware.process_response(request_2, response_2_2, spider)
 
     assert request_2.meta[HS_REQUEST_ID_KEY] == 2
     assert request_2.meta[HS_PARENT_ID_KEY] == 0

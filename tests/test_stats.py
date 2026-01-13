@@ -4,7 +4,7 @@ import pytest
 from scrapy.spiders import Spider
 from scrapy.utils.test import get_crawler
 
-from sh_scrapy import stats
+from sh_scrapy import stats, _SCRAPY_NO_SPIDER_ARG
 
 
 @pytest.fixture
@@ -28,7 +28,10 @@ def test_collector_upload_stats(collector):
 
 @mock.patch('twisted.internet.task.LoopingCall')
 def test_collector_open_spider(lcall, collector):
-    collector.open_spider('spider')
+    if _SCRAPY_NO_SPIDER_ARG:
+        collector.open_spider()
+    else:
+        collector.open_spider('spider')
     lcall.assert_called_with(collector._upload_stats)
     lcall.return_value.start.assert_called_with(collector.INTERVAL, now=True)
     dcall = lcall.return_value.start.return_value
@@ -41,6 +44,9 @@ def test_collector_close_spider(collector):
     collector._samplestask.running = True
     stats = {'item_scraped_count': 10}
     collector.set_stats(stats.copy())
-    collector.close_spider('spider', 'reason')
+    if _SCRAPY_NO_SPIDER_ARG:
+        collector.close_spider(reason='reason')
+    else:
+        collector.close_spider('spider', 'reason')
     assert collector._samplestask.stop.called
     collector.pipe_writer.write_stats.assert_called_with(stats.copy())
