@@ -11,8 +11,8 @@ setup(
     long_description=open('README.md').read(),
     packages=find_packages(),
     install_requires=[
-        'Scrapy>=1.6',
-        'scrapinghub>=2.1.0',
+        'Scrapy>=2.7',
+        'scrapinghub>=2.4.0',
     ],
     entry_points={
         'console_scripts': [
@@ -21,7 +21,7 @@ setup(
             'shub-image-info = sh_scrapy.crawl:shub_image_info',
         ],
     },
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     classifiers=[
         'Framework :: Scrapy',
         'Development Status :: 5 - Production/Stable',
@@ -30,7 +30,6 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
