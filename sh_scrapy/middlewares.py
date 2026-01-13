@@ -117,10 +117,10 @@ class HubstorageDownloaderMiddleware:
 
     if _SCRAPY_NO_SPIDER_ARG:
 
-        async def process_request(self, request: Request) -> None:
+        def process_request(self, request: Request) -> None:
             return self._process_request(request)
 
-        async def process_response(self, request: Request, response: Response) -> Response:
+        def process_response(self, request: Request, response: Response) -> Response:
             return self._process_response(request, response)
 
     else:
