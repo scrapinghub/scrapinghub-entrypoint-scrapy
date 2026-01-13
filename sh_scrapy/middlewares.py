@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
+from typing import Iterable, AsyncGenerator, Optional
 from warnings import warn
 from weakref import WeakKeyDictionary
 
@@ -7,7 +8,7 @@ from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy.http import Request, Response
 
-from sh_scrapy import _SCRAPY_ASYNC_API
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.writer import pipe_writer
 
 
@@ -26,24 +27,46 @@ class HubstorageSpiderMiddleware:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._seen_requests = seen_requests
 
-    def process_spider_output(self, response, result, spider):
+    if _SCRAPY_NO_SPIDER_ARG:
+
+        def process_spider_output(self, response: Response, result: Iterable) -> Iterable:
+            return self._process_spider_output(response, result)
+
+        async def process_spider_output_async(
+            self, response: Response, result: Iterable
+        ) -> AsyncGenerator:
+            return await self._process_spider_output_async(response, result)
+
+    else:
+
+        def process_spider_output(
+            self, response: Response, result: Iterable, spider: Spider
+        ) -> Iterable:
+            return self._process_spider_output(response, result)
+
+        async def process_spider_output_async(
+            self, response: Response, result: Iterable, spider: Spider
+        ) -> AsyncGenerator:
+            return await self._process_spider_output_async(response, result)
+
+    def _process_spider_output(self, response: Response, result: Iterable) -> Iterable:
         parent = self._seen_requests.pop(response.request, None)
         for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
 
-    async def process_spider_output_async(self, response, result, spider):
+    async def _process_spider_output_async(self, response: Response, result: Iterable) -> AsyncGenerator:
         parent = self._seen_requests.pop(response.request, None)
         async for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
 
-    def _process_request(self, request, parent):
+    def _process_request(self, request: Request, parent: Optional[int]) -> None:
         request.meta[HS_PARENT_ID_KEY] = parent
         # Remove request id if it was for some reason set in the request coming from Spider.
         request.meta.pop(HS_REQUEST_ID_KEY, None)
@@ -92,7 +115,7 @@ class HubstorageDownloaderMiddleware:
             from scrapy.utils.request import request_fingerprint
             self._fingerprint = request_fingerprint
 
-    if _SCRAPY_ASYNC_API:
+    if _SCRAPY_NO_SPIDER_ARG:
 
         async def process_request(self, request: Request) -> None:
             return self._process_request(request)

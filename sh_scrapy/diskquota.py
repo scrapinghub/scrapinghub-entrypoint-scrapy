@@ -8,7 +8,7 @@ from scrapy.crawler import Crawler
 from scrapy.exceptions import NotConfigured
 from scrapy.http import Request, Response
 
-from sh_scrapy import _SCRAPY_ASYNC_API
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 
 
 class DiskQuota:
@@ -28,7 +28,7 @@ class DiskQuota:
 
 class DiskQuotaDownloaderMiddleware(DiskQuota):
 
-    if _SCRAPY_ASYNC_API:
+    if _SCRAPY_NO_SPIDER_ARG:
 
         def process_exception(self, request: Request, exception: Exception) -> None:
             if self._is_disk_quota_error(exception):
@@ -45,7 +45,7 @@ class DiskQuotaDownloaderMiddleware(DiskQuota):
 
 class DiskQuotaSpiderMiddleware(DiskQuota):
 
-    if _SCRAPY_ASYNC_API:
+    if _SCRAPY_NO_SPIDER_ARG:
 
         def process_spider_exception(self, response: Response, exception: Exception) -> None:
             if self._is_disk_quota_error(exception):
