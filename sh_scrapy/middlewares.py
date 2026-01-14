@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
-from typing import Iterable, AsyncGenerator, Optional
+from typing import AsyncIterable, AsyncGenerator, Iterable, Optional
 from warnings import warn
 from weakref import WeakKeyDictionary
 
@@ -59,7 +59,9 @@ class HubstorageSpiderMiddleware:
                 self._process_request(x, parent)
             yield x
 
-    async def _process_spider_output_async(self, response: Response, result: Iterable) -> AsyncGenerator:
+    async def _process_spider_output_async(
+        self, response: Response, result: AsyncIterable
+    ) -> AsyncGenerator:
         parent = self._seen_requests.pop(response.request, None)
         async for x in result:
             if isinstance(x, Request):
