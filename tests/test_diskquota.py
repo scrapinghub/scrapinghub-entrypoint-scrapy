@@ -1,3 +1,5 @@
+import asyncio
+
 import mock
 import pytest
 from scrapy.utils.test import get_crawler
@@ -45,25 +47,33 @@ def test_downloaded_mware_process_not_stopped(crawler):
     crawler.engine = mock.Mock()
     mware = DiskQuotaDownloaderMiddleware(crawler)
     if _SCRAPY_NO_SPIDER_ARG:
-        mware.process_exception('request', ValueError())
+        result = mware.process_exception('request', ValueError())
+        asyncio.run(result)  # consume the coroutine to avoid warnings
     else:
         mware.process_exception('request', ValueError(), 'spider')
     assert not crawler.engine.close_spider.called
+    if _SCRAPY_NO_SPIDER_ARG:
+        assert not crawler.engine.close_spider_async.called
 
 
 def test_downloaded_mware_process_stopped(crawler):
     crawler.engine = mock.Mock()
+    # Mock close_spider_async to return a coroutine
+    async def mock_close_spider_async(**kwargs):
+        pass
+    crawler.engine.close_spider_async = mock.Mock(side_effect=mock_close_spider_async)
+
     mware = DiskQuotaDownloaderMiddleware(crawler)
     error = IOError()
     error.errno = 122
     if _SCRAPY_NO_SPIDER_ARG:
-        mware.process_exception('request', error)
+        result = mware.process_exception('request', error)
+        asyncio.run(result)
+        assert crawler.engine.close_spider_async.called
+        assert crawler.engine.close_spider_async.call_args[1] == {'reason': 'diskusage_exceeded'}
     else:
         mware.process_exception('request', error, 'spider')
-    assert crawler.engine.close_spider.called
-    if _SCRAPY_NO_SPIDER_ARG:
-        assert crawler.engine.close_spider.call_args[1] == {'reason': 'diskusage_exceeded'}
-    else:
+        assert crawler.engine.close_spider.called
         assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')
 
 
@@ -79,15 +89,25 @@ def test_spider_mware_process_not_stopped(crawler):
 
 def test_spider_mware_process_stopped(crawler):
     crawler.engine = mock.Mock()
+    # Mock close_spider_async to return a coroutine
+    async def mock_close_spider_async(**kwargs):
+        pass
+    crawler.engine.close_spider_async = mock.Mock(side_effect=mock_close_spider_async)
+
     mware = DiskQuotaSpiderMiddleware(crawler)
     error = IOError()
     error.errno = 122
-    if _SCRAPY_NO_SPIDER_ARG:
-        mware.process_spider_exception('response', error)
-    else:
-        mware.process_spider_exception('response', error, 'spider')
-    assert crawler.engine.close_spider.called
-    if _SCRAPY_NO_SPIDER_ARG:
-        assert crawler.engine.close_spider.call_args[0] == (None, 'diskusage_exceeded')
-    else:
-        assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')
+
+    async def run_test():
+        if _SCRAPY_NO_SPIDER_ARG:
+            mware.process_spider_exception('response', error)
+            # Wait a bit for the task to complete
+            await asyncio.sleep(0.1)
+            assert crawler.engine.close_spider_async.called
+            assert crawler.engine.close_spider_async.call_args[1] == {'reason': 'diskusage_exceeded'}
+        else:
+            mware.process_spider_exception('response', error, 'spider')
+            assert crawler.engine.close_spider.called
+            assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')
+
+    asyncio.run(run_test())
