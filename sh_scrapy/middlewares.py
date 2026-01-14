@@ -38,7 +38,8 @@ class HubstorageSpiderMiddleware:
         async def process_spider_output_async(
             self, response: Response, result: Iterable
         ) -> AsyncGenerator:
-            return await self._process_spider_output_async(response, result)
+            async for x in self._process_spider_output_async(response, result):
+                yield x
 
     else:
 
@@ -50,7 +51,8 @@ class HubstorageSpiderMiddleware:
         async def process_spider_output_async(
             self, response: Response, result: Iterable, spider: Spider
         ) -> AsyncGenerator:
-            return await self._process_spider_output_async(response, result)
+            async for x in self._process_spider_output_async(response, result):
+                yield x
 
     def _process_spider_output(self, response: Response, result: Iterable) -> Iterable:
         parent = self._seen_requests.pop(response.request, None)
