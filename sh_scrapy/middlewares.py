@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import itertools
-from typing import AsyncIterable, AsyncGenerator, Iterable, Optional
+from typing import AsyncIterable, AsyncGenerator, Iterable
 from warnings import warn
 from weakref import WeakKeyDictionary
 
@@ -68,7 +68,7 @@ class HubstorageSpiderMiddleware:
                 self._process_request(x, parent)
             yield x
 
-    def _process_request(self, request: Request, parent: Optional[int]) -> None:
+    def _process_request(self, request: Request, parent: int | None) -> None:
         request.meta[HS_PARENT_ID_KEY] = parent
         # Remove request id if it was for some reason set in the request coming from Spider.
         request.meta.pop(HS_REQUEST_ID_KEY, None)

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy.statscollectors import StatsCollector
@@ -26,7 +24,7 @@ class HubStorageStatsCollector(StatsCollector):
         d = self._samplestask.start(self.INTERVAL, **kwargs)
         d.addErrback(self._setup_looping_call, now=False)
 
-    def _close_spider(self, spider: Optional[Spider] = None, reason: Optional[str] = None) -> None:
+    def _close_spider(self, spider: Spider | None = None, reason: str | None = None) -> None:
         super().close_spider(spider=spider, reason=reason)
         if self._samplestask.running:
             self._samplestask.stop()
@@ -37,15 +35,15 @@ class HubStorageStatsCollector(StatsCollector):
         def open_spider(self) -> None:
             self._setup_looping_call(now=True)
 
-        def close_spider(self, reason: Optional[str] = None) -> None:
+        def close_spider(self, reason: str | None = None) -> None:
             self._close_spider(reason=reason)
 
     else:
 
-        def open_spider(self, spider: Optional[Spider] = None) -> None:
+        def open_spider(self, spider: Spider | None = None) -> None:
             self._setup_looping_call(now=True)
 
         def close_spider(
-            self, spider: Optional[Spider] = None, reason: Optional[str] = None
+            self, spider: Spider | None = None, reason: str | None = None
         ) -> None:
             self._close_spider(spider=spider, reason=reason)
