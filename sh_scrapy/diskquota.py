@@ -3,6 +3,8 @@ DiskQuota downloader and spider middlewares.
 The goal is to catch disk quota errors and stop spider gently.
 """
 
+import asyncio
+
 from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy.exceptions import NotConfigured
@@ -30,9 +32,9 @@ class DiskQuotaDownloaderMiddleware(DiskQuota):
 
     if _SCRAPY_NO_SPIDER_ARG:
 
-        def process_exception(self, request: Request, exception: Exception) -> None:
+        async def process_exception(self, request: Request, exception: Exception) -> None:
             if self._is_disk_quota_error(exception):
-                self.crawler.engine.close_spider(self.crawler.spider, reason="diskusage_exceeded")
+                await self.crawler.engine.close_spider_async(reason="diskusage_exceeded")
 
     else:
 
@@ -45,11 +47,18 @@ class DiskQuotaDownloaderMiddleware(DiskQuota):
 
 class DiskQuotaSpiderMiddleware(DiskQuota):
 
+    def __init__(self, crawler: Crawler):
+        super().__init__(crawler)
+        self._tasks: set[asyncio.Task] = set()
+
     if _SCRAPY_NO_SPIDER_ARG:
 
         def process_spider_exception(self, response: Response, exception: Exception) -> None:
             if self._is_disk_quota_error(exception):
-                self.crawler.engine.close_spider(self.crawler.spider, "diskusage_exceeded")
+                coro = self.crawler.engine.close_spider_async(reason="diskusage_exceeded")
+                task = asyncio.create_task(coro)
+                self._tasks.add(task)
+                task.add_done_callback(self._tasks.discard)
 
     else:
 
