@@ -15,7 +15,7 @@ from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 
 class DiskQuota:
 
-    def __init__(self, crawler: Crawler) -> None:
+    def __init__(self, crawler: Crawler):
         if not crawler.settings.getbool("DISK_QUOTA_STOP_ON_ERROR"):
             raise NotConfigured
         self.crawler = crawler

@@ -103,7 +103,7 @@ class HubstorageDownloaderMiddleware:
             result._load_fingerprinter()
         return result
 
-    def __init__(self, crawler: Crawler) -> None:
+    def __init__(self, crawler: Crawler):
         self._crawler = crawler
         self._seen_requests = seen_requests
         self.pipe_writer = pipe_writer

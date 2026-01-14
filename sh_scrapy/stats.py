@@ -11,7 +11,7 @@ class HubStorageStatsCollector(StatsCollector):
 
     INTERVAL = 30
 
-    def __init__(self, crawler: Crawler) -> None:
+    def __init__(self, crawler: Crawler):
         super(HubStorageStatsCollector, self).__init__(crawler)
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
