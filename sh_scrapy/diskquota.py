@@ -3,6 +3,8 @@ DiskQuota downloader and spider middlewares.
 The goal is to catch disk quota errors and stop spider gently.
 """
 
+from __future__ import annotations
+
 import asyncio
 
 from scrapy import Spider
@@ -21,7 +23,7 @@ class DiskQuota:
         self.crawler = crawler
 
     @classmethod
-    def from_crawler(cls, crawler: Crawler) -> "DiskQuota":
+    def from_crawler(cls, crawler: Crawler) -> DiskQuota:
         return cls(crawler)
 
     def _is_disk_quota_error(self, error: Exception) -> bool:

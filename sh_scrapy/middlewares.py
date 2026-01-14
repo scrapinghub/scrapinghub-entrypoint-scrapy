@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import itertools
 from typing import AsyncIterable, AsyncGenerator, Iterable
 from warnings import warn
@@ -88,7 +90,7 @@ class HubstorageDownloaderMiddleware:
     """
 
     @classmethod
-    def from_crawler(cls, crawler: Crawler) -> "HubstorageDownloaderMiddleware":
+    def from_crawler(cls, crawler: Crawler) -> HubstorageDownloaderMiddleware:
         try:
             result = cls(crawler)
         except TypeError:
