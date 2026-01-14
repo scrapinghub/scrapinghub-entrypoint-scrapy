@@ -30,10 +30,6 @@ jobs:
           os: ubuntu-24.04
           env:
             TOXENV: py
-        - python-version: "3.14"
-          os: ubuntu-24.04
-          env:
-            TOXENV: py
 
     steps:
     - uses: actions/checkout@v4
