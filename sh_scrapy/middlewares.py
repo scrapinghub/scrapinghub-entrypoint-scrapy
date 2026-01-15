@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
+
 import itertools
+from typing import AsyncIterable, AsyncGenerator, Iterable
 from warnings import warn
 from weakref import WeakKeyDictionary
 
-from scrapy import Request
+from scrapy import Spider
+from scrapy.crawler import Crawler
+from scrapy.http import Request, Response
 
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.writer import pipe_writer
+
 
 HS_REQUEST_ID_KEY = '_hsid'
 HS_PARENT_ID_KEY = '_hsparent'
@@ -13,33 +20,59 @@ request_id_sequence = itertools.count()
 seen_requests = WeakKeyDictionary()
 
 
-class HubstorageSpiderMiddleware(object):
+class HubstorageSpiderMiddleware:
     """Hubstorage spider middleware.
-    
+
     What it does:
-    
+
     - Sets parent request ids to the requests coming out of the spider.
-    
+
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._seen_requests = seen_requests
 
-    def process_spider_output(self, response, result, spider):
+    if _SCRAPY_NO_SPIDER_ARG:
+
+        def process_spider_output(self, response: Response, result: Iterable) -> Iterable:
+            return self._process_spider_output(response, result)
+
+        async def process_spider_output_async(
+            self, response: Response, result: Iterable
+        ) -> AsyncGenerator:
+            async for x in self._process_spider_output_async(response, result):
+                yield x
+
+    else:
+
+        def process_spider_output(
+            self, response: Response, result: Iterable, spider: Spider
+        ) -> Iterable:
+            return self._process_spider_output(response, result)
+
+        async def process_spider_output_async(
+            self, response: Response, result: Iterable, spider: Spider
+        ) -> AsyncGenerator:
+            async for x in self._process_spider_output_async(response, result):
+                yield x
+
+    def _process_spider_output(self, response: Response, result: Iterable) -> Iterable:
         parent = self._seen_requests.pop(response.request, None)
         for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
 
-    async def process_spider_output_async(self, response, result, spider):
+    async def _process_spider_output_async(
+        self, response: Response, result: AsyncIterable
+    ) -> AsyncGenerator:
         parent = self._seen_requests.pop(response.request, None)
         async for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
 
-    def _process_request(self, request, parent):
+    def _process_request(self, request: Request, parent: int | None) -> None:
         request.meta[HS_PARENT_ID_KEY] = parent
         # Remove request id if it was for some reason set in the request coming from Spider.
         request.meta.pop(HS_REQUEST_ID_KEY, None)
@@ -47,17 +80,17 @@ class HubstorageSpiderMiddleware(object):
 
 class HubstorageDownloaderMiddleware:
     """Hubstorage dowloader middleware.
-    
+
     What it does:
-    
+
     - Generates request ids for all downloaded requests.
     - Sets parent request ids for requests generated in downloader middlewares.
     - Stores all downloaded requests into Hubstorage.
-    
+
     """
 
     @classmethod
-    def from_crawler(cls, crawler):
+    def from_crawler(cls, crawler: Crawler) -> HubstorageDownloaderMiddleware:
         try:
             result = cls(crawler)
         except TypeError:
@@ -74,21 +107,37 @@ class HubstorageDownloaderMiddleware:
             result._load_fingerprinter()
         return result
 
-    def __init__(self, crawler):
+    def __init__(self, crawler: Crawler):
         self._crawler = crawler
         self._seen_requests = seen_requests
         self.pipe_writer = pipe_writer
         self.request_id_sequence = request_id_sequence
         self._load_fingerprinter()
 
-    def _load_fingerprinter(self):
+    def _load_fingerprinter(self) -> None:
         if hasattr(self._crawler, "request_fingerprinter"):
             self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
         else:
             from scrapy.utils.request import request_fingerprint
             self._fingerprint = request_fingerprint
 
-    def process_request(self, request, spider):
+    if _SCRAPY_NO_SPIDER_ARG:
+
+        def process_request(self, request: Request) -> None:
+            return self._process_request(request)
+
+        def process_response(self, request: Request, response: Response) -> Response:
+            return self._process_response(request, response)
+
+    else:
+
+        def process_request(self, request: Request, spider: Spider) -> None:
+            return self._process_request(request)
+
+        def process_response(self, request: Request, response: Response, spider: Spider) -> Response:
+            return self._process_response(request, response)
+
+    def _process_request(self, request: Request) -> None:
         # Check if request id is set, which usually happens for retries or redirects because
         # those requests are usually copied from the original one.
         request_id = request.meta.pop(HS_REQUEST_ID_KEY, None)
@@ -96,7 +145,7 @@ class HubstorageDownloaderMiddleware:
             # Set original request id or None as a parent request id.
             request.meta[HS_PARENT_ID_KEY] = request_id
 
-    def process_response(self, request, response, spider):
+    def _process_response(self, request: Request, response: Response) -> Response:
         # This class of response check is intended to fix the bug described here
         # https://github.com/scrapy-plugins/scrapy-zyte-api/issues/112
         if type(response).__name__ == "DummyResponse" and type(response).__module__.startswith("scrapy_poet"):

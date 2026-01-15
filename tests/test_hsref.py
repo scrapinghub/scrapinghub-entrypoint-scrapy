@@ -17,7 +17,6 @@ def test_init_disabled(monkeypatch):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures('set_environment')
 def hsref():
     return _HubstorageRef()
 
