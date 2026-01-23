@@ -11,6 +11,7 @@ from scrapy import Spider
 from scrapy.crawler import Crawler
 from scrapy.exceptions import NotConfigured
 from scrapy.http import Request, Response
+from scrapy.utils.defer import deferred_from_coro
 
 from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 
@@ -57,10 +58,15 @@ class DiskQuotaSpiderMiddleware(DiskQuota):
 
         def process_spider_exception(self, response: Response, exception: Exception) -> None:
             if self._is_disk_quota_error(exception):
+                from scrapy.utils.asyncio import is_asyncio_available
+
                 coro = self.crawler.engine.close_spider_async(reason="diskusage_exceeded")
-                task = asyncio.create_task(coro)
-                self._tasks.add(task)
-                task.add_done_callback(self._tasks.discard)
+                if is_asyncio_available():
+                    task = asyncio.create_task(coro)
+                    self._tasks.add(task)
+                    task.add_done_callback(self._tasks.discard)
+                else:
+                    deferred_from_coro(coro)
 
     else:
 
