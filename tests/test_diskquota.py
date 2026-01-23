@@ -111,3 +111,53 @@ def test_spider_mware_process_stopped(crawler):
             assert crawler.engine.close_spider.call_args[0] == ('spider', 'diskusage_exceeded')
 
     asyncio.run(run_test())
+
+
+@pytest.mark.skipif(not _SCRAPY_NO_SPIDER_ARG, reason="Only test on recent Scrapy versions")
+def test_spider_mware_process_stopped_asyncio_reactor(crawler):
+    """Test that disk quota error closes spider using the asyncio reactor."""
+
+    crawler.engine = mock.Mock()
+    # Mock close_spider_async to return a coroutine
+    async def mock_close_spider_async(**kwargs):
+        pass
+    crawler.engine.close_spider_async = mock.Mock(side_effect=mock_close_spider_async)
+
+    mware = DiskQuotaSpiderMiddleware(crawler)
+    error = IOError()
+    error.errno = 122
+
+    # Mock is_asyncio_available to return True (simulate asyncio reactor)
+    with mock.patch("scrapy.utils.asyncio.is_asyncio_available", return_value=True):
+        with mock.patch("asyncio.create_task") as mock_create_task:
+            mware.process_spider_exception("response", error)
+
+            # Verify close_spider_async was called with correct reason
+            assert mock_create_task.called
+            assert crawler.engine.close_spider_async.called
+            assert crawler.engine.close_spider_async.call_args[1] == {'reason': 'diskusage_exceeded'}
+
+
+@pytest.mark.skipif(not _SCRAPY_NO_SPIDER_ARG, reason="Only test on recent Scrapy versions")
+def test_spider_mware_process_stopped_non_asyncio_reactor(crawler):
+    """Test that disk quota error closes spider using a non-asyncio reactor (Twisted)."""
+
+    crawler.engine = mock.Mock()
+    # Mock close_spider_async to return a coroutine
+    async def mock_close_spider_async(**kwargs):
+        pass
+    crawler.engine.close_spider_async = mock.Mock(side_effect=mock_close_spider_async)
+
+    mware = DiskQuotaSpiderMiddleware(crawler)
+    error = IOError()
+    error.errno = 122
+
+    # Mock is_asyncio_available to return False (simulate Twisted reactor)
+    with mock.patch("scrapy.utils.asyncio.is_asyncio_available", return_value=False):
+        with mock.patch("sh_scrapy.diskquota.deferred_from_coro") as mock_deferred:
+            mware.process_spider_exception("response", error)
+
+            # Verify close_spider_async was called with correct reason
+            assert mock_deferred.called
+            assert crawler.engine.close_spider_async.called
+            assert crawler.engine.close_spider_async.call_args[1] == {'reason': 'diskusage_exceeded'}
