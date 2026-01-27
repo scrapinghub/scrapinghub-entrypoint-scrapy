@@ -8,16 +8,16 @@ import pytest
 from scrapy.utils.python import to_unicode, to_bytes
 
 TEMP_DIR = tempfile.mkdtemp()
-SHUB_FIFO_PATH = os.path.join(TEMP_DIR, 'scrapinghub')
-os.environ['SHUB_FIFO_PATH'] = SHUB_FIFO_PATH
+SHUB_FIFO_PATH = os.path.join(TEMP_DIR, "scrapinghub")
+os.environ["SHUB_FIFO_PATH"] = SHUB_FIFO_PATH
 
-from sh_scrapy.writer import pipe_writer  # should go after setting SHUB_FIFO_PATH
-
-
-TEST_AUTH = to_unicode(codecs.encode(to_bytes('1/2/3:authstr'), 'hex_codec'))
+from sh_scrapy.writer import pipe_writer  # should go after setting SHUB_FIFO_PATH
 
 
-@pytest.fixture(scope='session', autouse=True)
+TEST_AUTH = to_unicode(codecs.encode(to_bytes("1/2/3:authstr"), "hex_codec"))
+
+
+@pytest.fixture(scope="session", autouse=True)
 def clean_shub_fifo_path():
     global TEMP_DIR
     pipe_writer.open()
@@ -29,11 +29,7 @@ def clean_shub_fifo_path():
 
 @pytest.fixture(autouse=True)
 def set_jobkeyenvironment(monkeypatch):
-    monkeypatch.setenv('SHUB_JOBKEY', '1/2/3')
-    monkeypatch.setenv('SCRAPY_JOB', '1/2/3')
-    monkeypatch.setenv('SHUB_JOBAUTH', TEST_AUTH)
-    monkeypatch.setenv('SHUB_STORAGE', 'storage-url')
-
-
-# install the reactor explicitly, as Scrapy including scrapy.utils.test.get_crawler() assumes it's installed
-from twisted.internet import reactor
+    monkeypatch.setenv("SHUB_JOBKEY", "1/2/3")
+    monkeypatch.setenv("SCRAPY_JOB", "1/2/3")
+    monkeypatch.setenv("SHUB_JOBAUTH", TEST_AUTH)
+    monkeypatch.setenv("SHUB_STORAGE", "storage-url")

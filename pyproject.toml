@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+filterwarnings = [
+    # https://github.com/scrapinghub/python-scrapinghub/commit/d1d3df0db5be926999ab71086f83ae8a7120e781
+    "ignore::DeprecationWarning:scrapinghub\\.hubstorage\\.serialization",
+]
