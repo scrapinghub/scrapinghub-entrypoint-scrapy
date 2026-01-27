@@ -25,7 +25,7 @@ Changes
 -   Made Python 3.13 support official, and dropped support for Python 3.6 and
     3.7.
 
--   ``HubstorageDownloaderMiddleware`` is now an `universal spider middleware
+-   ``HubstorageDownloaderMiddleware`` is now a `universal spider middleware
     <https://docs.scrapy.org/en/latest/topics/coroutines.html#universal-spider-middleware>`__.
 
 0.17.5 (2024-11-28)
