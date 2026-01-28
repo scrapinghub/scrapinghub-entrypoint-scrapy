@@ -2,7 +2,7 @@
 Changes
 =======
 
-0.18.1 (unreleased)
+0.18.1 (2026-01-28)
 ===================
 
 -   Fixed ``DiskQuotaDownloaderMiddleware`` and ``DiskQuotaSpiderMiddleware``
