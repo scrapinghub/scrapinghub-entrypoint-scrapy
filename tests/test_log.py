@@ -1,9 +1,7 @@
-import json
 import logging
 import mock
 import pytest
 import sys
-import zlib
 
 from sh_scrapy.log import _stdout, _stderr
 from sh_scrapy.log import initialize_logging
@@ -215,19 +213,3 @@ def test_stdout_logger_writelines(pipe_writer):
     logger.writelines(['test-line'])
     assert pipe_writer.write_log.called
     pipe_writer.write_log.assert_called_with(level=20, message='[stdout] test-line')
-
-
-@pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
-@mock.patch('sh_scrapy.log.pipe_writer._pipe')
-def test_unicode_decode_error_handling(pipe_mock):
-    hdlr = HubstorageLogHandler()
-    message = 'value=%s' % zlib.compress('value')
-    record = logging.makeLogRecord({'msg': message, 'levelno': 10})
-    hdlr.emit(record)
-    assert pipe_mock.write.called
-    payload = json.loads(pipe_mock.write.call_args_list[2][0][0])
-    assert isinstance(payload.pop('time'), int)
-    assert payload == {
-        'message': r'value=x\x9c+K\xcc)M\x05\x00\x06j\x02\x1e',
-        'level': 10
-    }
