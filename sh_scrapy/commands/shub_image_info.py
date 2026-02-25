@@ -18,7 +18,7 @@ class Command(ScrapyCommand):
         return "Print JSON-encoded project metadata."
 
     def add_options(self, parser):
-        super(Command, self).add_options(parser)
+        super().add_options(parser)
         # backward compatibility for optparse/argparse
         try:
             add_argument = parser.add_argument

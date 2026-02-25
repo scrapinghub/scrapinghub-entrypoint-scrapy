@@ -85,7 +85,7 @@ class HubstorageLogHandler(logging.Handler):
         cur = sys.stderr
         try:
             sys.stderr = _stderr
-            super(HubstorageLogHandler, self).handleError(record)
+            super().handleError(record)
         finally:
             sys.stderr = cur
 
