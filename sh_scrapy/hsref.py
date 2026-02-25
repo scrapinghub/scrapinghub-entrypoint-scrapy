@@ -7,7 +7,7 @@ from codecs import decode
 from scrapy.utils.python import to_unicode
 
 
-class _HubstorageRef(object):
+class _HubstorageRef:
 
     def __init__(self):
         self.enabled = 'SHUB_JOBKEY' in os.environ

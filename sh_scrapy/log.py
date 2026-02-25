@@ -90,7 +90,7 @@ class HubstorageLogHandler(logging.Handler):
             sys.stderr = cur
 
 
-class HubstorageLogObserver(object):
+class HubstorageLogObserver:
     """Twisted log observer with Scrapy specifics that writes to HubStorage"""
 
     def __init__(self, loghdlr):

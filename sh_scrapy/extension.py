@@ -31,7 +31,7 @@ else:
         return ItemAdapter.is_item(item)
 
 
-class HubstorageExtension(object):
+class HubstorageExtension:
     """Extension to write scraped items to HubStorage"""
 
     def __init__(self, crawler):

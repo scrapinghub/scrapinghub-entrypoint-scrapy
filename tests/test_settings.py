@@ -404,7 +404,7 @@ def test_populate_settings_check_required():
 
 def test_update_old_classpaths_not_string():
 
-    class CustomObject(object):
+    class CustomObject:
         pass
 
     test_value = {'scrapy.exporter.CustomExporter': 1,
