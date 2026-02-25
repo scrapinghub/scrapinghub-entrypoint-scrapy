@@ -187,7 +187,7 @@ def get_entry_points_mock():
 
 @unittest.skipIf(sys.version_info < (3,8), "Requires Python 3.8 or higher")
 @mock.patch('sh_scrapy.crawl._run_script')
-@mock.patch('importlib.metadata.entry_points')
+@mock.patch('sh_scrapy.crawl.entry_points')
 def test_run_pkgscript_base_usage_python_3_8_plus(entry_points_mock, mocked_run):
     entry_points_mock.return_value = get_entry_points_mock()
     _run_pkgscript(['py:script.py', 'arg1', 'arg2'])
