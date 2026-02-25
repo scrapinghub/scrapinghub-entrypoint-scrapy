@@ -19,12 +19,7 @@ class Command(ScrapyCommand):
 
     def add_options(self, parser):
         super().add_options(parser)
-        # backward compatibility for optparse/argparse
-        try:
-            add_argument = parser.add_argument
-        except AttributeError:
-            add_argument = parser.add_option
-        add_argument(
+        parser.add_argument(
             "--debug",
             action="store_true",
             help="add debugging information such as list of "
