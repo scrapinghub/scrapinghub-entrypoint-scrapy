@@ -2,8 +2,7 @@
 # --------------------- DO NOT ADD IMPORTS HERE -------------------------
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
-from __future__ import print_function
-import datetime
+import datetime as dt
 import logging
 import os
 import socket
@@ -11,7 +10,7 @@ import sys
 import sysconfig
 import warnings
 from contextlib import contextmanager
-from importlib.metadata import PathDistribution
+from importlib.metadata import entry_points, PathDistribution
 from pathlib import Path
 from typing import Tuple
 
@@ -89,14 +88,14 @@ def _fatalerror():
             try:
                 Client(_sentry_dsn).captureException()
             except Exception as err:
-                print(datetime.datetime.utcnow().isoformat(),
+                print(dt.datetime.now(dt.timezone.utc).isoformat(),
                       "Error when sending fatal error to sentry:", err,
                       file=_sys_stderr)
 
     # Log error to hworker slotN.out
     # Inspired by logging.Handler.handleError()
     try:
-        print(datetime.datetime.utcnow().isoformat(), end=' ',
+        print(dt.datetime.now(dt.timezone.utc).isoformat(), end=' ',
               file=_sys_stderr)
         traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
@@ -129,31 +128,16 @@ def _run_pkgscript(argv):
     scriptname = argv[0]
     sys.argv = argv
 
-    try:
-        import importlib.metadata
-        has_importlib = True
-    except ImportError:
-        import pkg_resources
-        has_importlib = False
+    dist = None
+    for ep in entry_points(group='scrapy'):
+        if ep.name == 'settings':
+            dist = ep.dist
+            break
 
-    def get_distribution():
-        if has_importlib:
-            eps = importlib.metadata.entry_points(group='scrapy')
-        else:
-            eps = pkg_resources.WorkingSet().iter_entry_points('scrapy')
-
-        for ep in eps:
-            if ep.name == 'settings':
-                return ep.dist
-
-    d = get_distribution()
-    if not d:
+    if not dist:
         raise ValueError(SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND)
     ns = {"__name__": "__main__"}
-    if has_importlib:
-        _run_script(d, scriptname, ns)
-    else:
-        d.run_script(scriptname, ns)
+    _run_script(dist, scriptname, ns)
 
 
 def _get_script_code_and_path(dist: PathDistribution, script_name: str) -> Tuple[str, str]:
@@ -177,12 +161,14 @@ def _get_script_code_and_path(dist: PathDistribution, script_name: str) -> Tuple
 
 
 def _run_script(dist: PathDistribution, script_name: str, namespace: dict) -> None:
-    # An importlib-based replacement for pkg_resources.NullProvider.run_script().
-    # It's possible that this doesn't support all cases that pkg_resources does,
-    # so it may need to be improved when those are discovered.
-    # Using a private attribute (dist._path) seems to be necessary to get the
-    # full file path, but it's only needed for diagnostic messages so it should
-    # be easy to fix this by moving to relative paths if this API is removed.
+    """An importlib-based replacement for pkg_resources.NullProvider.run_script().
+
+    It's possible that this doesn't support all cases that pkg_resources does,
+    so it may need to be improved when those are discovered.
+    Using a private attribute (dist._path) seems to be necessary to get the
+    full file path, but it's only needed for diagnostic messages so it should
+    be easy to fix this by moving to relative paths if this API is removed.
+    """
     source, script_filename = _get_script_code_and_path(dist, script_name)
     if source is None:
         raise ValueError(

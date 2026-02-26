@@ -1,10 +1,8 @@
 
 from argparse import ArgumentParser
-from optparse import OptionParser
 
 import pytest
 import scrapy
-from packaging import version
 
 from sh_scrapy.commands.shub_image_info import Command
 
@@ -16,21 +14,6 @@ def command():
     return command
 
 
-@pytest.mark.skipif(
-    version.parse(scrapy.__version__) >= version.parse("2.6"),
-    reason="Scrapy>=2.6 uses argparse"
-)
-def test_optparse(command):
-    parser = OptionParser()
-    command.add_options(parser)
-    options = parser.parse_args(["--debug"])
-    assert options[0].debug
-
-
-@pytest.mark.skipif(
-    version.parse(scrapy.__version__) < version.parse("2.6"),
-    reason="Scrapy<2.6 uses optparse"
-)
 def test_argparse(command):
     parser = ArgumentParser()
     command.add_options(parser)
