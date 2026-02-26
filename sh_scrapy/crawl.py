@@ -2,6 +2,7 @@
 # --------------------- DO NOT ADD IMPORTS HERE -------------------------
 # Add them below so that any import errors are caught and sent to sentry
 # -----------------------------------------------------------------------
+import datetime as dt
 import logging
 import os
 import socket
@@ -9,7 +10,6 @@ import sys
 import sysconfig
 import warnings
 from contextlib import contextmanager
-from datetime import timezone, datetime as dt
 from importlib.metadata import entry_points, PathDistribution
 from pathlib import Path
 from typing import Tuple
@@ -88,14 +88,14 @@ def _fatalerror():
             try:
                 Client(_sentry_dsn).captureException()
             except Exception as err:
-                print(dt.now(timezone.utc).isoformat(),
+                print(dt.datetime.now(dt.timezone.utc).isoformat(),
                       "Error when sending fatal error to sentry:", err,
                       file=_sys_stderr)
 
     # Log error to hworker slotN.out
     # Inspired by logging.Handler.handleError()
     try:
-        print(dt.now(timezone.utc).isoformat(), end=' ',
+        print(dt.datetime.now(dt.timezone.utc).isoformat(), end=' ',
               file=_sys_stderr)
         traceback.print_exception(ei[0], ei[1], ei[2], None, _sys_stderr)
     except IOError:
