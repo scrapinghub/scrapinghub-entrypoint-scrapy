@@ -4,11 +4,11 @@ from warnings import warn
 from weakref import WeakKeyDictionary
 
 import scrapy
+from formerly import deprecated_class
 from scrapy import signals
 from scrapy import version_info as SCRAPY_VERSION_INFO
 from scrapy.exporters import PythonItemExporter
 from scrapy.http import Request
-from scrapy.utils.deprecate import create_deprecated_class
 
 from sh_scrapy import hsref
 from sh_scrapy.exceptions import SHScrapyDeprecationWarning
@@ -133,9 +133,9 @@ class HubstorageMiddleware:
             yield x
 
 
-HubstorageMiddleware = create_deprecated_class(
+HubstorageMiddleware = deprecated_class(
     "HubstorageMiddleware",
     HubstorageMiddleware,
-    warn_category=SHScrapyDeprecationWarning,
-    subclass_warn_message=_HUBSTORAGE_MIDDLEWARE_WARNING
+    category=SHScrapyDeprecationWarning,
+    subclass_message=_HUBSTORAGE_MIDDLEWARE_WARNING
 )

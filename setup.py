@@ -9,6 +9,7 @@ setup(
     long_description=open('README.md').read(),
     packages=find_packages(),
     install_requires=[
+        'formerly>=0.1.0',
         'Scrapy>=2.7',
         'scrapinghub>=2.4.0',
     ],
