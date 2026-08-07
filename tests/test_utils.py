@@ -1,7 +1,7 @@
 from os import environ
-from mock import patch
+from unittest.mock import patch
 
-from pytest import raises
+import pytest
 from scrapy.settings import Settings
 
 from sh_scrapy.utils import get_project_settings
@@ -14,26 +14,26 @@ def test_get_project_settings_class():
 
 def test_get_project_settings_default():
     settings = get_project_settings()
-    assert settings['TELNETCONSOLE_HOST'] == '0.0.0.0'
+    assert settings["TELNETCONSOLE_HOST"] == "0.0.0.0"
 
 
 @patch.dict(
     environ,
     {
-        'SHUB_SETTINGS': '{"project_settings": {"SETTING_TEST": "VAL"}}',
-    }
+        "SHUB_SETTINGS": '{"project_settings": {"SETTING_TEST": "VAL"}}',
+    },
 )
 def test_get_project_settings_setting():
     settings = get_project_settings()
-    assert settings['SETTING_TEST'] == 'VAL'
+    assert settings["SETTING_TEST"] == "VAL"
 
 
 @patch.dict(
     environ,
     {
-        'SHUB_SETTINGS': '{"project_settings": {"SETTING....',
-    }
+        "SHUB_SETTINGS": '{"project_settings": {"SETTING....',
+    },
 )
 def test_get_project_settings_bad_setting():
-    with raises(ValueError):
+    with pytest.raises(ValueError):
         get_project_settings()

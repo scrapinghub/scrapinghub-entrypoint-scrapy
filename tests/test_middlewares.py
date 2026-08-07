@@ -1,32 +1,33 @@
-# -*- coding: utf-8 -*-
-from weakref import WeakKeyDictionary
 import itertools
+from pathlib import Path
+from weakref import WeakKeyDictionary
+
 import pytest
-import sys
-from scrapy import Spider, Request, Item
+from scrapy import Item, Request, Spider
 from scrapy.http import Response
 from scrapy.utils.test import get_crawler
-from typing import Optional
 
 from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.middlewares import (
-    HubstorageSpiderMiddleware, HubstorageDownloaderMiddleware,
-    HS_REQUEST_ID_KEY, HS_PARENT_ID_KEY
+    HS_PARENT_ID_KEY,
+    HS_REQUEST_ID_KEY,
+    HubstorageDownloaderMiddleware,
+    HubstorageSpiderMiddleware,
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def monkeypatch_globals(monkeypatch):
-    monkeypatch.setattr('sh_scrapy.middlewares.request_id_sequence', itertools.count())
-    monkeypatch.setattr('sh_scrapy.middlewares.seen_requests', WeakKeyDictionary())
+    monkeypatch.setattr("sh_scrapy.middlewares.request_id_sequence", itertools.count())
+    monkeypatch.setattr("sh_scrapy.middlewares.seen_requests", WeakKeyDictionary())
 
 
-@pytest.fixture()
+@pytest.fixture
 def hs_spider_middleware(monkeypatch_globals):
     return HubstorageSpiderMiddleware()
 
 
-@pytest.fixture()
+@pytest.fixture
 def hs_downloader_middleware(monkeypatch_globals):
     crawler = get_crawler()
     return HubstorageDownloaderMiddleware.from_crawler(crawler)
@@ -35,10 +36,12 @@ def hs_downloader_middleware(monkeypatch_globals):
 def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert hs_spider_middleware._seen_requests == WeakKeyDictionary()
     assert hs_downloader_middleware._seen_requests == WeakKeyDictionary()
-    assert hs_spider_middleware._seen_requests is hs_downloader_middleware._seen_requests
+    assert (
+        hs_spider_middleware._seen_requests is hs_downloader_middleware._seen_requests
+    )
 
-    spider = Spider('test')
-    url = 'http://resp-url'
+    spider = Spider("test")
+    url = "http://resp-url"
     request_0 = Request(url)
     response_0 = Response(url)
 
@@ -68,9 +71,13 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     item2 = Item()
     output = [request_1, request_2, item1, item2]
     if _SCRAPY_NO_SPIDER_ARG:
-        processed_output = list(hs_spider_middleware.process_spider_output(response_0, output))
+        processed_output = list(
+            hs_spider_middleware.process_spider_output(response_0, output)
+        )
     else:
-        processed_output = list(hs_spider_middleware.process_spider_output(response_0, output, spider))
+        processed_output = list(
+            hs_spider_middleware.process_spider_output(response_0, output, spider)
+        )
 
     assert processed_output[0] is request_1
     assert request_1.meta[HS_PARENT_ID_KEY] == 0
@@ -100,7 +107,6 @@ def test_hs_middlewares(hs_downloader_middleware, hs_spider_middleware):
     assert request_2.meta[HS_PARENT_ID_KEY] == 0
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middleware):
     from dataclasses import dataclass
 
@@ -108,11 +114,11 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
     class DummyResponse(Response):
         __module__: str = "scrapy_poet.api"
 
-        def __init__(self, url: str, request: Optional[Request] = None):
+        def __init__(self, url: str, request: Request | None = None):
             super().__init__(url=url, request=request)
 
-    spider = Spider('test')
-    url = 'http://resp-url'
+    spider = Spider("test")
+    url = "http://resp-url"
 
     # cleaning log file
     hs_downloader_middleware.pipe_writer.open()
@@ -127,7 +133,7 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
         hs_downloader_middleware.process_request(request, spider)
         hs_downloader_middleware.process_response(request, response_1, spider)
 
-    with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
+    with Path(hs_downloader_middleware.pipe_writer.path).open() as tmp_file:
         assert tmp_file.readline() == ""
     assert request.meta == {}
 
@@ -135,14 +141,13 @@ def test_hs_middlewares_dummy_response(hs_downloader_middleware, hs_spider_middl
         hs_downloader_middleware.process_response(request, response_2)
     else:
         hs_downloader_middleware.process_response(request, response_2, spider)
-    with open(hs_downloader_middleware.pipe_writer.path, 'r') as tmp_file:
-        assert tmp_file.readline().startswith('REQ')
+    with Path(hs_downloader_middleware.pipe_writer.path).open() as tmp_file:
+        assert tmp_file.readline().startswith("REQ")
 
     assert request.meta[HS_REQUEST_ID_KEY] == 0
     assert request.meta[HS_PARENT_ID_KEY] is None
 
 
-@pytest.mark.skipif(sys.version_info < (3, 7), reason="requires python3.7")
 def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     from dataclasses import dataclass
 
@@ -150,11 +155,11 @@ def test_hs_middlewares_retry(hs_downloader_middleware, hs_spider_middleware):
     class DummyResponse(Response):
         __module__: str = "scrapy_poet.api"
 
-        def __init__(self, url: str, request: Optional[Request] = None):
+        def __init__(self, url: str, request: Request | None = None):
             super().__init__(url=url, request=request)
 
-    spider = Spider('test')
-    url = 'http://resp-url'
+    spider = Spider("test")
+    url = "http://resp-url"
     request_0 = Request(url)
     response_0 = Response(url)
 

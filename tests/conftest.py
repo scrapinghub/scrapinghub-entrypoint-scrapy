@@ -1,25 +1,21 @@
-# -*- coding: utf-8 -*-
-import codecs
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
-from scrapy.utils.python import to_unicode, to_bytes
 
-TEMP_DIR = tempfile.mkdtemp()
-SHUB_FIFO_PATH = os.path.join(TEMP_DIR, "scrapinghub")
+TEMP_DIR = Path(tempfile.mkdtemp())
+SHUB_FIFO_PATH = str(TEMP_DIR / "scrapinghub")
 os.environ["SHUB_FIFO_PATH"] = SHUB_FIFO_PATH
 
 from sh_scrapy.writer import pipe_writer  # should go after setting SHUB_FIFO_PATH
 
-
-TEST_AUTH = to_unicode(codecs.encode(to_bytes("1/2/3:authstr"), "hex_codec"))
+TEST_AUTH = "312f322f333a61757468737472"  # 1/2/3:authstr
 
 
 @pytest.fixture(scope="session", autouse=True)
 def clean_shub_fifo_path():
-    global TEMP_DIR
     pipe_writer.open()
     try:
         yield

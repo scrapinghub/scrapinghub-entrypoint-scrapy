@@ -15,7 +15,6 @@ from sh_scrapy.exceptions import SHScrapyDeprecationWarning
 from sh_scrapy.middlewares import HS_PARENT_ID_KEY, request_id_sequence
 from sh_scrapy.writer import pipe_writer
 
-
 try:
     from itemadapter import ItemAdapter
 except ImportError:
@@ -27,11 +26,12 @@ except ImportError:
     def is_item(item):
         return isinstance(item, _base_item_cls)
 else:
+
     def is_item(item):
         return ItemAdapter.is_item(item)
 
 
-class HubstorageExtension(object):
+class HubstorageExtension:
     """Extension to write scraped items to HubStorage"""
 
     def __init__(self, crawler):
@@ -54,7 +54,7 @@ class HubstorageExtension(object):
 
     def item_scraped(self, item, spider):
         if not is_item(item):
-            self.logger.error("Wrong item type: %s" % item)
+            self.logger.error(f"Wrong item type: {item}")
             return
         type_ = type(item).__name__
         item = self.exporter.export_item(item)
@@ -78,7 +78,6 @@ Please migrate to new middlewares.
 
 
 class HubstorageMiddleware:
-
     @classmethod
     def from_crawler(cls, crawler):
         try:
@@ -91,6 +90,7 @@ class HubstorageMiddleware:
                     "become an error in the future."
                 ),
                 DeprecationWarning,
+                stacklevel=2,
             )
             result = cls()
             result._crawler = crawler
@@ -99,9 +99,12 @@ class HubstorageMiddleware:
 
     def _load_fingerprinter(self):
         if hasattr(self._crawler, "request_fingerprinter"):
-            self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
+            self._fingerprint = lambda request: (
+                self._crawler.request_fingerprinter.fingerprint(request).hex()
+            )
         else:
             from scrapy.utils.request import request_fingerprint
+
             self._fingerprint = request_fingerprint
 
     def __init__(self, crawler=None):
@@ -119,7 +122,7 @@ class HubstorageMiddleware:
             status=response.status,
             method=response.request.method,
             rs=len(response.body),
-            duration=response.meta.get('download_latency', 0) * 1000,
+            duration=response.meta.get("download_latency", 0) * 1000,
             parent=response.meta.get(HS_PARENT_ID_KEY),
             fp=self._fingerprint(response.request),
         )
@@ -137,5 +140,5 @@ HubstorageMiddleware = create_deprecated_class(
     "HubstorageMiddleware",
     HubstorageMiddleware,
     warn_category=SHScrapyDeprecationWarning,
-    subclass_warn_message=_HUBSTORAGE_MIDDLEWARE_WARNING
+    subclass_warn_message=_HUBSTORAGE_MIDDLEWARE_WARNING,
 )
