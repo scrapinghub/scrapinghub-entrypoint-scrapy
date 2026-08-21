@@ -11,6 +11,7 @@ from sh_scrapy.env import _jobauth
 from sh_scrapy.env import _jobname
 from sh_scrapy.env import decode_uri
 from sh_scrapy.env import get_args_and_env
+from sh_scrapy.env import in_scrapy_cloud
 from sh_scrapy.env import _job_args_and_env
 from sh_scrapy.env import _make_scrapy_args
 from sh_scrapy.env import setup_environment
@@ -57,6 +58,13 @@ def test_job_args_and_env():
     assert result1 == (['custom.py', 'arg1'], {'some': 'env'})
     result2 = _job_args_and_env({'job_cmd': ('wrong', 'cmd', 'style')})
     assert result2 == (["('wrong', 'cmd', 'style')"], {})
+
+
+def test_in_scrapy_cloud(monkeypatch):
+    monkeypatch.delenv('SHUB_JOB_UID', raising=False)
+    assert not in_scrapy_cloud()
+    monkeypatch.setenv('SHUB_JOB_UID', '1234')
+    assert in_scrapy_cloud()
 
 
 def test_jobname():
