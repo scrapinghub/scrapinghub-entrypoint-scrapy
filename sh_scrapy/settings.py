@@ -227,7 +227,10 @@ def _load_default_settings(settings):
         'WEBSERVICE_ENABLED': False,
         'LOG_LEVEL': 'INFO',
         'LOG_ENABLED': False,
-        'TELNETCONSOLE_HOST': '0.0.0.0',  # to access telnet console from host
+        # to access telnet console from host
+        'TELNETCONSOLE_HOST': '0.0.0.0',
+        # fixed readable location
+        'REMOTE_CONTROL_JOBS_DIR': '/scrapinghub/.scrapy-remote-control/',
     }, priority='cmdline')
 
 
