@@ -121,7 +121,6 @@ def decode_uri(uri=None, envvar=None):
 
 
 def setup_environment():
-    # scrapy.cfg is required by scrapy.utils.project.data_path
-    # FIXME: drop this requirement
+    # Inside a project, scrapy.utils.project.data_path requires scrapy.cfg.
     if not os.path.exists('scrapy.cfg'):
         open('scrapy.cfg', 'w').close()
