@@ -2,6 +2,7 @@
 Module to hold a reference to singleton Hubstorage client and Job instance
 """
 import os
+import warnings
 from codecs import decode
 
 from scrapy.utils.python import to_unicode
@@ -45,13 +46,21 @@ class _HubstorageRef(object):
 
     @property
     def client(self):
-        from scrapinghub import HubstorageClient
+        from scrapinghub import ScrapinghubClient
         if self._client is None:
             user_agent = os.environ.get('SHUB_HS_USER_AGENT')
-            self._client = HubstorageClient(endpoint=self.endpoint,
-                                            auth=self.auth,
-                                            user_agent=user_agent)
-        return self._client
+            with warnings.catch_warnings():
+                # Job credentials are all a job has, and they cover the
+                # storage API that hsref is for.
+                warnings.filterwarnings(
+                    'ignore',
+                    message='A lot of endpoints support authentication only via apikey',
+                    category=UserWarning,
+                )
+                self._client = ScrapinghubClient(self.auth,
+                                                 endpoint=self.endpoint,
+                                                 user_agent=user_agent)
+        return self._client._hsclient
 
     @property
     def project(self):
