@@ -13,10 +13,9 @@ from contextlib import contextmanager
 from importlib.metadata import PathDistribution, entry_points
 from pathlib import Path
 
-# XXX: Do not use atexit to close Hubstorage client!
-# why: functions registed with atexit are called when run_script() finishes,
-# and at that point main() function doesn't completed leading to lost log
-# messages.
+# Do not use atexit to close the Hubstorage client: functions registered with
+# atexit are called when run_script() finishes, before main() completes, and
+# log messages would be lost.
 from sh_scrapy.exceptions import SHScrapyDeprecationWarning
 
 logger = logging.getLogger(__name__)
