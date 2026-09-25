@@ -3,16 +3,15 @@ from scrapy.crawler import Crawler
 from scrapy.statscollectors import StatsCollector
 from twisted.internet import task
 
-from sh_scrapy import hsref, _SCRAPY_NO_SPIDER_ARG
+from sh_scrapy import _SCRAPY_NO_SPIDER_ARG, hsref
 from sh_scrapy.writer import pipe_writer
 
 
 class HubStorageStatsCollector(StatsCollector):
-
     INTERVAL = 30
 
     def __init__(self, crawler: Crawler):
-        super(HubStorageStatsCollector, self).__init__(crawler)
+        super().__init__(crawler)
         self.hsref = hsref.hsref
         self.pipe_writer = pipe_writer
 
@@ -24,7 +23,9 @@ class HubStorageStatsCollector(StatsCollector):
         d = self._samplestask.start(self.INTERVAL, **kwargs)
         d.addErrback(self._setup_looping_call, now=False)
 
-    def _close_spider(self, spider: Spider | None = None, reason: str | None = None) -> None:
+    def _close_spider(
+        self, spider: Spider | None = None, reason: str | None = None
+    ) -> None:
         super().close_spider(spider=spider, reason=reason)
         if self._samplestask.running:
             self._samplestask.stop()

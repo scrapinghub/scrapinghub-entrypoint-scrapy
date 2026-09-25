@@ -1,4 +1,7 @@
 name: Publish
+
+permissions: {}
+
 on:
   push:
     tags:
@@ -12,17 +15,27 @@ jobs:
   publish:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/scrapinghub-entrypoint-scrapy
+
     permissions:
       id-token: write
+
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.13"
-      - name: Publish to PyPI
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Build
         run: |
-          python -m pip install --upgrade build twine
+          python -m pip install --upgrade build
           python -m build
-          export TWINE_USERNAME=__token__
-          export TWINE_PASSWORD=${{ secrets.PYPI_TOKEN }}
-          twine upload dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

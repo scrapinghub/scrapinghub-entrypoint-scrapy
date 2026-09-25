@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 import scrapy
-from scrapy.utils.test import get_crawler
 from scrapy.exceptions import NotConfigured
 from scrapy.utils.defer import deferred_f_from_coro_f, maybe_deferred_to_future
+from scrapy.utils.test import get_crawler
 
 from sh_scrapy.diskquota import DiskQuota
 
@@ -37,8 +37,8 @@ def test_disk_quota_from_crawler(crawler):
 def test_disk_quota_check_error(crawler):
     dquota = DiskQuota(crawler)
     assert not dquota._is_disk_quota_error(ValueError())
-    assert not dquota._is_disk_quota_error(IOError())
-    valid_error = IOError()
+    assert not dquota._is_disk_quota_error(OSError())
+    valid_error = OSError()
     valid_error.errno = 122
     assert dquota._is_disk_quota_error(valid_error)
     other_valid_error = OSError()
@@ -53,7 +53,7 @@ class RaiseValueErrorMiddleware:
 
 class RaiseDiskErrorMiddleware:
     def process_request(self, request, spider: Spider | None = None):
-        error = IOError()
+        error = OSError()
         error.errno = 122
         raise error
 
@@ -138,7 +138,7 @@ async def test_spider_mware_process_stopped():
         start_urls = ["data:,"]
 
         def parse(self, response):
-            error = IOError()
+            error = OSError()
             error.errno = 122
             raise error
 
