@@ -85,12 +85,12 @@ class HubstorageLogHandler(logging.Handler):
         cur = sys.stderr
         try:
             sys.stderr = _stderr
-            super(HubstorageLogHandler, self).handleError(record)
+            super().handleError(record)
         finally:
             sys.stderr = cur
 
 
-class HubstorageLogObserver(object):
+class HubstorageLogObserver:
     """Twisted log observer with Scrapy specifics that writes to HubStorage"""
 
     def __init__(self, loghdlr):
