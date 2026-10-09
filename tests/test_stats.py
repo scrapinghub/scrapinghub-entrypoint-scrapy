@@ -26,6 +26,35 @@ def test_collector_upload_stats(collector):
     collector.pipe_writer.write_stats.assert_called_with(stats.copy())
 
 
+def test_collector_upload_stats_drops_oversized_value(collector):
+    collector.set_stats({
+        'item_scraped_count': 10,
+        'huge': 'x' * stats._MAX_STATS_SIZE,
+    })
+    collector._upload_stats()
+    uploaded = collector.pipe_writer.write_stats.call_args[0][0]
+    assert uploaded == {'item_scraped_count': 10, 'cloud/dropped_stats': 1}
+    assert stats._encoded_size(uploaded) <= stats._MAX_STATS_SIZE
+
+
+def test_collector_upload_stats_drops_until_it_fits(collector):
+    collector.set_stats({f'chunk/{i}': 'x' * 5000 for i in range(40)})
+    collector._upload_stats()
+    uploaded = collector.pipe_writer.write_stats.call_args[0][0]
+    assert stats._encoded_size(uploaded) <= stats._MAX_STATS_SIZE
+    assert uploaded['cloud/dropped_stats'] + len(uploaded) - 1 == 40
+
+
+def test_collector_upload_stats_keeps_dropping_and_warns_once(collector, caplog):
+    collector.set_stats({'huge': 'x' * stats._MAX_STATS_SIZE, 'kept': 1})
+    collector._upload_stats()
+    collector.set_stats({'huge': 'x', 'kept': 1, 'later': 2})
+    collector._upload_stats()
+    uploaded = collector.pipe_writer.write_stats.call_args[0][0]
+    assert uploaded == {'kept': 1, 'later': 2, 'cloud/dropped_stats': 1}
+    assert len([r for r in caplog.records if r.levelname == 'WARNING']) == 1
+
+
 @mock.patch('twisted.internet.task.LoopingCall')
 def test_collector_open_spider(lcall, collector):
     if _SCRAPY_NO_SPIDER_ARG:
