@@ -120,6 +120,11 @@ def decode_uri(uri=None, envvar=None):
             return json.load(reader(data_file))
 
 
+def in_scrapy_cloud():
+    """Return whether the current process is running as a Scrapy Cloud job."""
+    return 'SHUB_JOB_UID' in os.environ
+
+
 def setup_environment():
     # Inside a project, scrapy.utils.project.data_path requires scrapy.cfg.
     if not os.path.exists('scrapy.cfg'):
