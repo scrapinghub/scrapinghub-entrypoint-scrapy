@@ -1,3 +1,5 @@
+import warnings
+
 import mock
 import pytest
 from sh_scrapy.hsref import _HubstorageRef
@@ -24,7 +26,7 @@ def hsref():
 @pytest.fixture
 def hsc_class(monkeypatch):
     hsc_class = mock.Mock()
-    monkeypatch.setattr('scrapinghub.HubstorageClient', hsc_class)
+    monkeypatch.setattr('scrapinghub.ScrapinghubClient', hsc_class)
     return hsc_class
 
 
@@ -55,33 +57,40 @@ def test_job_ids(hsref):
 
 def test_client(hsref, hsc_class):
     assert not hsref._client
-    assert hsref.client == hsc_class.return_value
-    hsc_class.assert_called_with(endpoint='storage-url',
-                                 auth='1/2/3:authstr',
+    assert hsref.client == hsc_class.return_value._hsclient
+    hsc_class.assert_called_with('1/2/3:authstr',
+                                 endpoint='storage-url',
                                  user_agent=None)
     assert hsref._client
-    assert hsref.client == hsref._client
+    assert hsref.client == hsref._client._hsclient
 
 
 def test_client_custom_ua(hsref, hsc_class, monkeypatch):
     monkeypatch.setenv('SHUB_HS_USER_AGENT', 'testUA')
     assert not hsref._client
-    assert hsref.client == hsc_class.return_value
-    hsc_class.assert_called_with(endpoint='storage-url',
-                                 auth='1/2/3:authstr',
+    assert hsref.client == hsc_class.return_value._hsclient
+    hsc_class.assert_called_with('1/2/3:authstr',
+                                 endpoint='storage-url',
                                  user_agent='testUA')
     assert hsref._client
-    assert hsref.client == hsref._client
+    assert hsref.client == hsref._client._hsclient
+
+
+def test_client_real(hsref):
+    from scrapinghub.client import HubstorageClient
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        assert isinstance(hsref.client, HubstorageClient)
 
 
 def test_project(hsref):
     hsc = mock.Mock()
-    hsc.get_project.return_value = 'Project'
+    hsc._hsclient.get_project.return_value = 'Project'
     hsref._client = hsc
 
     assert not hsref._project
     assert hsref.project == 'Project'
-    hsc.get_project.assert_called_with('1')
+    hsc._hsclient.get_project.assert_called_with('1')
     assert hsref._project == hsref.project
 
 

@@ -2,9 +2,23 @@
 import json
 import os
 import threading
+import time
+from datetime import datetime
 
-from scrapinghub.hubstorage.serialization import jsondefault
-from scrapinghub.hubstorage.utils import millitime
+_EPOCH = datetime(1970, 1, 1)
+
+
+def _jsondefault(o):
+    if isinstance(o, datetime):
+        if o.tzinfo:
+            o = o.replace(tzinfo=None) - o.utcoffset()
+        delta = o - _EPOCH
+        return (delta.microseconds + (delta.seconds + delta.days * 86400) * 1e6) // 1000
+    return str(o)
+
+
+def _millitime():
+    return int(time.time() * 1000)
 
 
 def _not_configured(*args, **kwargs):
@@ -43,7 +57,7 @@ class _PipeWriter(object):
         encoded_payload = json.dumps(
             payload,
             separators=(',', ':'),
-            default=jsondefault
+            default=_jsondefault
         ).encode('utf-8')
         # write needs to be locked because write can be called from multiple threads
         with self._lock:
@@ -55,7 +69,7 @@ class _PipeWriter(object):
 
     def write_log(self, level, message):
         log = {
-            'time': millitime(),
+            'time': _millitime(),
             'level': level,
             'message': message
         }
@@ -69,7 +83,7 @@ class _PipeWriter(object):
             'rs': int(rs),
             'duration': int(duration),
             'parent': parent,
-            'time': millitime(),
+            'time': _millitime(),
             'fp': fp,
         }
         self._write('REQ', request)
@@ -78,7 +92,7 @@ class _PipeWriter(object):
         self._write('ITM', item)
 
     def write_stats(self, stats):
-        self._write('STA', {'time': millitime(), 'stats': stats})
+        self._write('STA', {'time': _millitime(), 'stats': stats})
 
     def set_outcome(self, outcome):
         self._write('FIN', {'outcome': outcome})

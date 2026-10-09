@@ -3,11 +3,12 @@ import json
 import logging
 import os
 import threading
+from datetime import datetime, timedelta, timezone
 from queue import Queue
 
 import pytest
 
-from sh_scrapy.writer import _PipeWriter
+from sh_scrapy.writer import _jsondefault, _PipeWriter
 
 
 @pytest.fixture
@@ -144,3 +145,10 @@ def test_writer_raises_runtime_error_if_not_configured():
     with pytest.raises(RuntimeError) as exc_info:
         w.close()
     assert exc_info.value.args[0] == error_msg
+
+
+def test_jsondefault():
+    naive = datetime(2020, 1, 2, 3, 4, 5, 678901)
+    aware = datetime(2020, 1, 2, 5, 4, 5, 678901, tzinfo=timezone(timedelta(hours=2)))
+    assert _jsondefault(naive) == _jsondefault(aware) == 1577934245678
+    assert _jsondefault(1.5) == '1.5'
