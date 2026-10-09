@@ -6,3 +6,5 @@ dist
 .tox
 /.coverage
 coverage.xml
+/.idea
+/.vscode
