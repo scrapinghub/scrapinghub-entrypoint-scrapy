@@ -48,18 +48,18 @@ class EntrypointSettings(Settings):
     """
 
     def __init__(self):
-        super(EntrypointSettings, self).__init__()
+        super().__init__()
         self.attributes = {}
 
     def set(self, name, value, priority='project'):
-        super(EntrypointSettings, self).set(
+        super().set(
             to_unicode(name),
             value if isinstance(value, str) else value,
             priority=priority)
 
     def copy_to_dict(self):
-        if hasattr(super(EntrypointSettings, self), 'copy_to_dict'):
-            return super(EntrypointSettings, self).copy_to_dict()
+        if hasattr(super(), 'copy_to_dict'):
+            return super().copy_to_dict()
         # Backward compatibility with older Scrapy versions w/o copy_to_dict
         settings = self.copy()
         return {key: settings[key] for key in settings.attributes}

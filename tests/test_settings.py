@@ -1,11 +1,8 @@
 import os
-import sys
 import mock
 
 import pytest
-from scrapy import version_info as scrapy_version
 from scrapy.settings import Settings
-from scrapy.utils.python import to_unicode
 
 from sh_scrapy.settings import EntrypointSettings
 from sh_scrapy.settings import _enforce_required_settings
@@ -74,7 +71,6 @@ def test_update_settings_per_key_priorities_old_behavior():
     assert test['ITEM_PIPELINES'] == {'path.two': 200}
 
 
-@pytest.mark.skipif(scrapy_version < (1, 1), reason="requires Scrapy>=1.1")
 def test_update_settings_per_key_priorities_new_behaviour():
     from scrapy.settings import BaseSettings
     test = EntrypointSettings()
@@ -85,27 +81,7 @@ def test_update_settings_per_key_priorities_new_behaviour():
         'test.path1': 100, 'test.path2': 200}
 
 
-@pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
-def test_update_settings_check_unicode_in_py2_key():
-    # a dict entry is duplicated as unicode doesn't match native str value
-    test = EntrypointSettings()
-    test.setdict({'\xf1e\xf1e\xf1e': 'test'}, 10)
-    assert test['\xf1e\xf1e\xf1e'] == 'test'
-    assert test[to_unicode('\xf1e\xf1e\xf1e')] == 'test'
-
-
-@pytest.mark.skipif(sys.version_info[0] == 3, reason="requires python2")
-def test_update_settings_check_unicode_in_py2_key_value():
-    # a dict entry is duplicated as unicode doesn't match native str value
-    test = EntrypointSettings()
-    test.setdict({'\xf1e\xf1e\xf1e': '\xf1e\xf1e'}, 10)
-    assert test['\xf1e\xf1e\xf1e'] == '\xf1e\xf1e'
-    native_key = to_unicode('\xf1e\xf1e\xf1e')
-    assert test[native_key] == to_unicode('\xf1e\xf1e')
-
-
-@pytest.mark.skipif(sys.version_info < (3,), reason="requires python3")
-def test_update_settings_check_unicode_in_py3():
+def test_update_settings_check_unicode():
     test = EntrypointSettings()
     test.setdict({'\xf1e\xf1e\xf1e': 'test'}, 10)
     assert test['\xf1e\xf1e\xf1e'] == 'test'
@@ -404,7 +380,7 @@ def test_populate_settings_check_required():
 
 def test_update_old_classpaths_not_string():
 
-    class CustomObject(object):
+    class CustomObject:
         pass
 
     test_value = {'scrapy.exporter.CustomExporter': 1,

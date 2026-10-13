@@ -3,7 +3,6 @@ import sys
 import json
 import mock
 import pytest
-import unittest
 from scrapy.settings import Settings
 
 import sh_scrapy.crawl
@@ -121,18 +120,8 @@ def test_run_pkg_script(run_pkg_mock):
     assert run_pkg_mock.call_args[0] == (['py:script.py'],)
 
 
-@unittest.skipIf(sys.version_info > (3,7), "Requires Python 3.7 or lower")
-@mock.patch('pkg_resources.WorkingSet')
-def test_run_pkg_script_distribution_not_found(working_set_class):
-    fake_set = mock.Mock()
-    fake_set.iter_entry_points.return_value = iter(())
-    working_set_class.return_value = fake_set
-    with pytest.raises(ValueError):
-        _run(['py:script.py'], {'SETTING': 'VALUE'})
-
-@unittest.skipIf(sys.version_info < (3,8), "Requires Python 3.8 or higher")
 @mock.patch('importlib.metadata.entry_points')
-def test_run_pkg_script_distribution_not_found_python_3_8_plus(working_set_class):
+def test_run_pkg_script_distribution_not_found(working_set_class):
     fake_set = mock.Mock()
     fake_set.iter_entry_points.return_value = iter(())
     working_set_class.return_value = [fake_set]
@@ -156,28 +145,6 @@ def test_run_scrapy(execute_mock):
     assert sys.argv == ['scrapy', 'crawl', 'spider']
 
 
-def get_working_set(working_set_class):
-    """Helper to confugure a fake working set with ep"""
-    working_set = working_set_class.return_value
-    ep = mock.Mock()
-    ep.name = 'settings'
-    working_set.iter_entry_points.return_value = [ep]
-    return working_set
-
-
-@unittest.skipIf(sys.version_info > (3,7), "Requires Python 3.7 or lower")
-@mock.patch('pkg_resources.WorkingSet')
-def test_run_pkgscript_base_usage(working_set_class):
-    working_set = get_working_set(working_set_class)
-    _run_pkgscript(['py:script.py', 'arg1', 'arg2'])
-    assert working_set.iter_entry_points.called
-    assert working_set.iter_entry_points.call_args[0] == ('scrapy',)
-    ep = working_set.iter_entry_points.return_value[0]
-    assert ep.dist.run_script.called
-    assert ep.dist.run_script.call_args[0] == (
-        'script.py', {'__name__': '__main__'})
-    assert sys.argv == ['script.py', 'arg1', 'arg2']
-
 def get_entry_points_mock():
     """Helper to configure a fake entry point"""
     ep = mock.Mock()
@@ -185,10 +152,10 @@ def get_entry_points_mock():
     ep.dist.run_script = mock.Mock()  # only for the pkg_resources code path
     return [ep]
 
-@unittest.skipIf(sys.version_info < (3,8), "Requires Python 3.8 or higher")
+
 @mock.patch('sh_scrapy.crawl._run_script')
-@mock.patch('importlib.metadata.entry_points')
-def test_run_pkgscript_base_usage_python_3_8_plus(entry_points_mock, mocked_run):
+@mock.patch('sh_scrapy.crawl.entry_points')
+def test_run_pkgscript_base_usage(entry_points_mock, mocked_run):
     entry_points_mock.return_value = get_entry_points_mock()
     _run_pkgscript(['py:script.py', 'arg1', 'arg2'])
     assert entry_points_mock.called

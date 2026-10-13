@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
 import json
 import subprocess
 
@@ -19,13 +18,8 @@ class Command(ScrapyCommand):
         return "Print JSON-encoded project metadata."
 
     def add_options(self, parser):
-        super(Command, self).add_options(parser)
-        # backward compatibility for optparse/argparse
-        try:
-            add_argument = parser.add_argument
-        except AttributeError:
-            add_argument = parser.add_option
-        add_argument(
+        super().add_options(parser)
+        parser.add_argument(
             "--debug",
             action="store_true",
             help="add debugging information such as list of "

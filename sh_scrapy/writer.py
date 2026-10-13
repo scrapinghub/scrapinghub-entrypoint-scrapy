@@ -11,7 +11,7 @@ def _not_configured(*args, **kwargs):
     raise RuntimeError("Pipe writer is misconfigured, named pipe path is not set")
 
 
-class _PipeWriter(object):
+class _PipeWriter:
     """Writer for the Scrapinghub named pipe.
 
     It's not safe to instantiate and use multiple writers, only one writer
