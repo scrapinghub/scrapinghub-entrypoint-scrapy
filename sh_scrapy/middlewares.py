@@ -1,23 +1,25 @@
-# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import itertools
-from typing import AsyncIterable, AsyncGenerator, Iterable
+from typing import TYPE_CHECKING
 from warnings import warn
 from weakref import WeakKeyDictionary
 
-from scrapy import Spider
-from scrapy.crawler import Crawler
 from scrapy.http import Request, Response
 
 from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
 from sh_scrapy.writer import pipe_writer
 
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, AsyncIterable, Iterable
 
-HS_REQUEST_ID_KEY = '_hsid'
-HS_PARENT_ID_KEY = '_hsparent'
+    from scrapy import Spider
+    from scrapy.crawler import Crawler
+
+HS_REQUEST_ID_KEY = "_hsid"
+HS_PARENT_ID_KEY = "_hsparent"
 request_id_sequence = itertools.count()
-seen_requests = WeakKeyDictionary()
+seen_requests: WeakKeyDictionary[Request, int] = WeakKeyDictionary()
 
 
 class HubstorageSpiderMiddleware:
@@ -34,11 +36,13 @@ class HubstorageSpiderMiddleware:
 
     if _SCRAPY_NO_SPIDER_ARG:
 
-        def process_spider_output(self, response: Response, result: Iterable) -> Iterable:
+        def process_spider_output(
+            self, response: Response, result: Iterable
+        ) -> Iterable:
             return self._process_spider_output(response, result)
 
         async def process_spider_output_async(
-            self, response: Response, result: Iterable
+            self, response: Response, result: AsyncIterable
         ) -> AsyncGenerator:
             async for x in self._process_spider_output_async(response, result):
                 yield x
@@ -51,13 +55,13 @@ class HubstorageSpiderMiddleware:
             return self._process_spider_output(response, result)
 
         async def process_spider_output_async(
-            self, response: Response, result: Iterable, spider: Spider
+            self, response: Response, result: AsyncIterable, spider: Spider
         ) -> AsyncGenerator:
             async for x in self._process_spider_output_async(response, result):
                 yield x
 
     def _process_spider_output(self, response: Response, result: Iterable) -> Iterable:
-        parent = self._seen_requests.pop(response.request, None)
+        parent = self._pop_parent(response)
         for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
@@ -66,11 +70,17 @@ class HubstorageSpiderMiddleware:
     async def _process_spider_output_async(
         self, response: Response, result: AsyncIterable
     ) -> AsyncGenerator:
-        parent = self._seen_requests.pop(response.request, None)
+        parent = self._pop_parent(response)
         async for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
+
+    def _pop_parent(self, response: Response) -> int | None:
+        # A response has no request unless it came from the downloader.
+        if response.request is None:
+            return None
+        return self._seen_requests.pop(response.request, None)
 
     def _process_request(self, request: Request, parent: int | None) -> None:
         request.meta[HS_PARENT_ID_KEY] = parent
@@ -101,8 +111,9 @@ class HubstorageDownloaderMiddleware:
                     "This will become an error in the future."
                 ),
                 DeprecationWarning,
+                stacklevel=2,
             )
-            result = cls()
+            result = cls()  # type: ignore[call-arg]
             result._crawler = crawler
             result._load_fingerprinter()
         return result
@@ -116,9 +127,14 @@ class HubstorageDownloaderMiddleware:
 
     def _load_fingerprinter(self) -> None:
         if hasattr(self._crawler, "request_fingerprinter"):
-            self._fingerprint = lambda request: self._crawler.request_fingerprinter.fingerprint(request).hex()
+            self._fingerprint = lambda request: (
+                self._crawler.request_fingerprinter.fingerprint(request).hex()  # type: ignore[union-attr]
+            )
         else:
-            from scrapy.utils.request import request_fingerprint
+            from scrapy.utils.request import (  # type: ignore[attr-defined]
+                request_fingerprint,
+            )
+
             self._fingerprint = request_fingerprint
 
     if _SCRAPY_NO_SPIDER_ARG:
@@ -134,7 +150,9 @@ class HubstorageDownloaderMiddleware:
         def process_request(self, request: Request, spider: Spider) -> None:
             return self._process_request(request)
 
-        def process_response(self, request: Request, response: Response, spider: Spider) -> Response:
+        def process_response(
+            self, request: Request, response: Response, spider: Spider
+        ) -> Response:
             return self._process_response(request, response)
 
     def _process_request(self, request: Request) -> None:
@@ -148,7 +166,9 @@ class HubstorageDownloaderMiddleware:
     def _process_response(self, request: Request, response: Response) -> Response:
         # This class of response check is intended to fix the bug described here
         # https://github.com/scrapy-plugins/scrapy-zyte-api/issues/112
-        if type(response).__name__ == "DummyResponse" and type(response).__module__.startswith("scrapy_poet"):
+        if type(response).__name__ == "DummyResponse" and type(
+            response
+        ).__module__.startswith("scrapy_poet"):
             return response
 
         self.pipe_writer.write_request(
@@ -156,7 +176,7 @@ class HubstorageDownloaderMiddleware:
             status=response.status,
             method=request.method,
             rs=len(response.body),
-            duration=request.meta.get('download_latency', 0) * 1000,
+            duration=request.meta.get("download_latency", 0) * 1000,
             parent=request.meta.setdefault(HS_PARENT_ID_KEY),
             fp=self._fingerprint(request),
         )

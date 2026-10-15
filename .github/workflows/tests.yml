@@ -1,58 +1,93 @@
 name: Tests
 
+permissions:
+  contents: read
+
 on: [push, pull_request]
 
+concurrency:
+  group: ${{github.workflow}}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  tests-ubuntu:
-    name: "Test: py${{ matrix.python-version }}, Ubuntu"
-    runs-on: ${{ matrix.os }}
+  tests:
+    name: "${{ matrix.env.TOXENV }}: py${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    env:
+      # Make uv use the interpreter that actions/setup-python installed instead
+      # of downloading one of its own.
+      UV_PYTHON_PREFERENCE: only-system
     strategy:
       fail-fast: false
       matrix:
         include:
         - python-version: "3.10"
-          os: ubuntu-22.04
           env:
-            TOXENV: py-scrapy27
+            TOXENV: min
         - python-version: "3.10"
-          os: ubuntu-24.04
+          env:
+            TOXENV: min-extra-deps
+        - python-version: "3.10"
           env:
             TOXENV: py
         - python-version: "3.11"
-          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.12"
-          os: ubuntu-24.04
           env:
             TOXENV: py
         - python-version: "3.13"
-          os: ubuntu-24.04
           env:
             TOXENV: py
-        - python-version: "3.13"
-          os: ubuntu-24.04
+        - python-version: "3.14"
+          env:
+            TOXENV: py
+        - python-version: "3.14"
           env:
             TOXENV: asyncio
+        - python-version: "3.14"
+          env:
+            TOXENV: extra-deps
+        - python-version: "3.14"
+          env:
+            TOXENV: pylint
+        - python-version: "3.10"
+          env:
+            TOXENV: typing
+        - python-version: "3.14"
+          env:
+            TOXENV: twinecheck
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Update pip & install tox
-      run: |
-        pip install -U pip
-        pip install tox
+    - name: Set up uv
+      uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      with:
+        cache-dependency-glob: |
+          pyproject.toml
+          tox.ini
 
     - name: Run tests
       env: ${{ matrix.env }}
-      run: tox
+      run: uvx --with tox-uv tox
 
     - name: Upload coverage report
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1

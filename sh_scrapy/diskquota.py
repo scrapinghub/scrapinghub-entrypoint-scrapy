@@ -6,14 +6,17 @@ The goal is to catch disk quota errors and stop spider gently.
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
-from scrapy import Spider
-from scrapy.crawler import Crawler
 from scrapy.exceptions import NotConfigured
-from scrapy.http import Request, Response
 from scrapy.utils.defer import deferred_from_coro
 
 from sh_scrapy import _SCRAPY_NO_SPIDER_ARG
+
+if TYPE_CHECKING:
+    from scrapy import Spider
+    from scrapy.crawler import Crawler
+    from scrapy.http import Request, Response
 
 
 class DiskQuota:
@@ -33,6 +36,8 @@ class DiskQuota:
     def _handle_exception(self, exception: Exception) -> None:
         if not self._is_disk_quota_error(exception):
             return
+        assert self.crawler.engine is not None
+        assert self.crawler.spider is not None
         if hasattr(self.crawler.engine, "close_spider_async"):
             from scrapy.utils.asyncio import is_asyncio_available
 

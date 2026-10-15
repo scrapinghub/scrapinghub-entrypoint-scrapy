@@ -1,9 +1,8 @@
-import os
-import json
 import codecs
+import json
+import os
 from base64 import b64decode
-
-from scrapy.utils.python import to_bytes, to_unicode
+from pathlib import Path
 
 
 def _make_scrapy_args(arg, args_dict):
@@ -11,62 +10,64 @@ def _make_scrapy_args(arg, args_dict):
         return []
     args = []
     for k, v in sorted(dict(args_dict).items()):
-        args += [arg, "{}={}".format(
-            to_unicode(k), to_unicode(v) if isinstance(v, str) else v)]
+        args += [arg, f"{k}={v}"]
     return args
 
 
 def _scrapy_crawl_args_and_env(msg):
-    args = ['scrapy', 'crawl', str(msg['spider'])] + \
-        _make_scrapy_args('-a', msg.get('spider_args')) + \
-        _make_scrapy_args('-s', msg.get('settings'))
+    args = [
+        "scrapy",
+        "crawl",
+        str(msg["spider"]),
+        *_make_scrapy_args("-a", msg.get("spider_args")),
+        *_make_scrapy_args("-s", msg.get("settings")),
+    ]
     env = {
-        'SCRAPY_JOB': msg['key'],
-        'SCRAPY_SPIDER': msg['spider'],
-        'SCRAPY_PROJECT_ID': msg['key'].split('/')[0],
+        "SCRAPY_JOB": msg["key"],
+        "SCRAPY_SPIDER": msg["spider"],
+        "SCRAPY_PROJECT_ID": msg["key"].split("/")[0],
         # the following should be considered deprecated
-        'SHUB_SPIDER_TYPE': msg.get('spider_type', '')
+        "SHUB_SPIDER_TYPE": msg.get("spider_type", ""),
     }
     return args, env
 
 
 def _job_args_and_env(msg):
-    env = msg.get('job_env')
+    env = msg.get("job_env")
     if not isinstance(env, dict):
         env = {}
-    cmd = msg.get('job_cmd')
+    cmd = msg.get("job_cmd")
     if not isinstance(cmd, list):
         cmd = [str(cmd)]
-    return cmd, {to_unicode(k): to_unicode(v) if isinstance(v, str) else v
-                 for k, v in sorted(dict(env).items())}
+    return cmd, dict(sorted(dict(env).items()))
 
 
 def _jobname(msg):
-    if 'job_name' in msg:
-        return msg['job_name']
-    elif 'spider' in msg:
-        return msg['spider']
-    else:
-        return msg['job_cmd'][0]
+    if "job_name" in msg:
+        return msg["job_name"]
+    if "spider" in msg:
+        return msg["spider"]
+    return msg["job_cmd"][0]
 
 
 def _jobauth(msg):
-    auth_data = to_bytes('{0[key]}:{0[auth]}'.format(msg))
-    return to_unicode(codecs.encode(auth_data, 'hex_codec'))
+    return f"{msg['key']}:{msg['auth']}".encode().hex()
 
 
 def get_args_and_env(msg):
-    envf = _job_args_and_env if 'job_cmd' in msg else _scrapy_crawl_args_and_env
+    envf = _job_args_and_env if "job_cmd" in msg else _scrapy_crawl_args_and_env
     args, env = envf(msg)
-    if 'api_url' in msg:
-        env['SHUB_APIURL'] = msg.get('api_url')
+    if "api_url" in msg:
+        env["SHUB_APIURL"] = msg.get("api_url")
 
-    env.update({
-        'SHUB_JOBKEY': msg['key'],
-        'SHUB_JOBAUTH': _jobauth(msg),
-        'SHUB_JOBNAME': _jobname(msg),
-        'SHUB_JOB_TAGS': ','.join(msg.get('tags') or ()),  # DEPRECATED?
-    })
+    env.update(
+        {
+            "SHUB_JOBKEY": msg["key"],
+            "SHUB_JOBAUTH": _jobauth(msg),
+            "SHUB_JOBNAME": _jobname(msg),
+            "SHUB_JOB_TAGS": ",".join(msg.get("tags") or ()),  # DEPRECATED?
+        }
+    )
     return args, env
 
 
@@ -74,53 +75,54 @@ def decode_uri(uri=None, envvar=None):
     """Return content for a data: or file: URI
 
     >>> decode_uri('data:application/json;charset=utf8;base64,ImhlbGxvIHdvcmxkIg==')
-    u'hello world'
+    'hello world'
     >>> decode_uri('data:;base64,ImhlbGxvIHdvcmxkIg==')
-    u'hello world'
+    'hello world'
     >>> decode_uri('{"spider": "hello"}')
-    {u'spider': u'hello'}
+    {'spider': 'hello'}
 
     """
     if envvar is not None:
-        uri = os.getenv(envvar, '')
+        uri = os.getenv(envvar, "")
     elif uri is None:
-        raise ValueError('An uri or envvar is required')
+        raise ValueError("An uri or envvar is required")
 
-    mime_type = 'application/json'
+    mime_type = "application/json"
 
     # data:[<MIME-type>][;charset=<encoding>][;base64],<data>
-    if uri.startswith('data:'):
-        prefix, _, data = uri.rpartition(',')
+    if uri.startswith("data:"):
+        prefix, _, data = uri.rpartition(",")
         mods = {}
-        for idx, value in enumerate(prefix[5:].split(';')):
+        for idx, value in enumerate(prefix[5:].split(";")):
             if idx == 0:
                 mime_type = value or mime_type
-            elif '=' in value:
-                k, _, v = value.partition('=')
+            elif "=" in value:
+                k, _, v = value.partition("=")
                 mods[k] = v
             else:
                 mods[value] = None
 
-        if 'base64' in mods:
+        if "base64" in mods:
             data = b64decode(data)
-        if mime_type == 'application/json':
-            data = data.decode(mods.get('charset', 'utf-8'))
+        if mime_type == "application/json":
+            data = data.decode(mods.get("charset", "utf-8"))
             return json.loads(data)
-        else:
-            return data
+        return data
 
-    if uri.startswith('{'):
+    if uri.startswith("{"):
         return json.loads(uri)
 
-    if uri.startswith('/'):
-        uri = 'file://' + uri
-    if uri.startswith('file://'):
+    if uri.startswith("/"):
+        uri = "file://" + uri
+    if uri.startswith("file://"):
         reader = codecs.getreader("utf-8")
-        with open(uri[7:], 'rb') as data_file:
+        with Path(uri[7:]).open("rb") as data_file:
             return json.load(reader(data_file))
+    return None
 
 
 def setup_environment():
     # Inside a project, scrapy.utils.project.data_path requires scrapy.cfg.
-    if not os.path.exists('scrapy.cfg'):
-        open('scrapy.cfg', 'w').close()
+    scrapy_cfg = Path("scrapy.cfg")
+    if not scrapy_cfg.exists():
+        scrapy_cfg.touch()
