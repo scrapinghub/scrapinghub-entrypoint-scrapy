@@ -57,7 +57,7 @@ class HubstorageSpiderMiddleware:
                 yield x
 
     def _process_spider_output(self, response: Response, result: Iterable) -> Iterable:
-        parent = self._seen_requests.pop(response.request, None)
+        parent = self._pop_parent(response)
         for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
@@ -66,11 +66,17 @@ class HubstorageSpiderMiddleware:
     async def _process_spider_output_async(
         self, response: Response, result: AsyncIterable
     ) -> AsyncGenerator:
-        parent = self._seen_requests.pop(response.request, None)
+        parent = self._pop_parent(response)
         async for x in result:
             if isinstance(x, Request):
                 self._process_request(x, parent)
             yield x
+
+    def _pop_parent(self, response: Response) -> int | None:
+        # A response has no request unless it came from the downloader.
+        if response.request is None:
+            return None
+        return self._seen_requests.pop(response.request, None)
 
     def _process_request(self, request: Request, parent: int | None) -> None:
         request.meta[HS_PARENT_ID_KEY] = parent
