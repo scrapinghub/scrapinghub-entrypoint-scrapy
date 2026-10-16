@@ -34,16 +34,18 @@ socket.setdefaulttimeout(60.0)
 
 
 SCRAPY_SETTINGS_ENTRYPOINT_NOT_FOUND = """
-Scrapy distribution with `scrapy.settings` entrypoint is not found.
-The entrypoint should be specified in your project setup.py, please make sure
-you specified it in the following format:
-setup(
-    ...,
-    entry_points = {'scrapy': ['settings = your_project.settings']},
-    ...
-)
-Check the link for more details:
-https://setuptools.readthedocs.io/en/latest/pkg_resources.html#entry-points
+No installed distribution declares a `scrapy.settings` entry point.
+
+Declare one in your project, pointing at its settings module:
+
+    # pyproject.toml
+    [project.entry-points.scrapy]
+    settings = "your_project.settings"
+
+    # setup.py
+    entry_points={"scrapy": ["settings = your_project.settings"]}
+
+See https://packaging.python.org/en/latest/specifications/entry-points/
 """
 
 
